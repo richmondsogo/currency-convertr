@@ -25,7 +25,9 @@ export function SiteModeControl({
   className,
   id,
 }) {
-  const itemClasses = size === "sm" ? "text-xs h-7 px-2" : "text-xs h-8 px-2.5";
+  const itemClasses = size === "sm"
+    ? "text-xs h-7 px-2.5 rounded-md font-medium text-muted-foreground hover:text-foreground data-[state=on]:text-foreground data-[state=on]:bg-background data-[state=on]:shadow-xs transition-[background-color,color,box-shadow,transform] motion-safe:active:scale-[0.98]"
+    : "text-xs h-8 px-3 rounded-md font-medium text-muted-foreground hover:text-foreground data-[state=on]:text-foreground data-[state=on]:bg-background data-[state=on]:shadow-xs transition-[background-color,color,box-shadow,transform] motion-safe:active:scale-[0.98]";
 
   const askLabel = domain ? `Ask on ${domain}` : "Mode Ask";
   const alwaysLabel = domain ? `Always convert ${domain}` : "Mode Always";
@@ -41,7 +43,7 @@ export function SiteModeControl({
         onChange?.(val);
       }}
       disabled={disabled}
-      className={cn("bg-secondary p-0.5 rounded-lg border border-border shrink-0", className)}
+      className={cn("bg-secondary/70 p-0.5 rounded-lg border border-border/70 shrink-0 gap-0.5", className)}
       aria-label={ariaLabel}
     >
       <ToggleGroupItem

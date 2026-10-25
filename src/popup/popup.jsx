@@ -502,14 +502,14 @@ export function PopupApp() {
     <div className="w-[360px] max-h-[560px] overflow-y-auto bg-background text-foreground font-sans p-4 flex flex-col gap-4 select-none selection:bg-accent/20">
       {/* 1. Header */}
       <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <span
-            className="w-8 h-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-mono font-bold text-xs"
+            className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-mono font-medium text-xs tracking-tight"
             aria-hidden="true"
           >
             fx
           </span>
-          <h1 className="font-semibold text-base tracking-tight text-foreground">
+          <h1 className="font-semibold text-sm tracking-tight text-foreground">
             Currency Convertr
           </h1>
         </div>
@@ -521,7 +521,7 @@ export function PopupApp() {
           onClick={openOptionsPage}
           title="Settings & Options"
           aria-label="Open settings"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-md"
         >
           <SettingsIcon className="h-4 w-4" aria-hidden="true" />
         </Button>
@@ -531,7 +531,7 @@ export function PopupApp() {
       {isRestricted && (
         <div
           id="unsupported-notice"
-          className="rounded-lg bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-3 py-2.5 text-sm text-foreground flex items-start gap-2.5"
+          className="rounded-lg bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-3 py-2 text-xs text-foreground flex items-start gap-2.5"
         >
           <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" aria-hidden="true" />
           <span className="leading-relaxed">
@@ -541,24 +541,24 @@ export function PopupApp() {
       )}
 
       {/* 3. Main Controls */}
-      <main id="main-controls" className="flex flex-col gap-4">
+      <main id="main-controls" className="flex flex-col gap-3.5">
         {/* Converter / Target Currency */}
-        <section className="space-y-2.5" aria-labelledby="target-heading">
+        <section className="space-y-2" aria-labelledby="target-heading">
           <div className="flex items-center justify-between">
-            <h2 id="target-heading" className="text-sm font-medium text-muted-foreground">
+            <h2 id="target-heading" className="text-xs font-medium text-muted-foreground">
               Convert this page to
             </h2>
             {pageTargetCurrency === settings?.targetCurrency && (
-              <Badge variant="secondary" className="text-xs font-mono px-2 py-0">
+              <Badge variant="secondary" className="text-[11px] font-mono font-medium text-muted-foreground bg-secondary/80 px-1.5 py-0 rounded border border-border/40">
                 Default
               </Badge>
             )}
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <span
               id="from-display"
-              className="shrink-0 text-sm text-muted-foreground"
+              className="shrink-0 text-xs text-muted-foreground"
             >
               Auto-detect
             </span>
@@ -575,7 +575,7 @@ export function PopupApp() {
                 ariaLabel="Select target currency for this page"
                 align="end"
                 disabled={isRestricted}
-                className="w-full h-9 font-mono text-sm"
+                className="w-full h-8 font-mono text-xs"
                 placeholder="Search code or name..."
               />
             </div>
@@ -596,10 +596,10 @@ export function PopupApp() {
                   onClick={() => handlePageTargetCurrencyChange(code)}
                   disabled={isRestricted}
                   aria-pressed={isSelected}
-                  className={`h-7 px-2.5 text-xs font-mono rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  className={`h-6 px-2 text-xs font-mono rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     isSelected
-                      ? "bg-secondary text-foreground font-medium"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "bg-secondary text-foreground font-medium shadow-xs"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                   }`}
                 >
                   {code}
@@ -615,7 +615,7 @@ export function PopupApp() {
           type="button"
           disabled={converting || isRestricted}
           onClick={handleConvertToggle}
-          className={`w-full h-11 text-sm font-semibold transition-[background-color,transform] motion-safe:active:scale-[0.98] ${
+          className={`w-full h-10 text-sm font-medium transition-[background-color,transform,box-shadow] motion-safe:active:scale-[0.98] ${
             isPageConverted
               ? "bg-secondary text-foreground hover:bg-secondary/80 ring-1 ring-inset ring-border"
               : "bg-primary text-primary-foreground hover:bg-primary/90"

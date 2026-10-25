@@ -108,21 +108,21 @@ export function CurrencyCombobox({
           aria-label={ariaLabel}
           disabled={disabled}
           className={cn(
-            "justify-between font-mono text-xs h-9 bg-background",
+            "justify-between font-mono text-xs h-9 bg-background hover:bg-secondary/60 border-border/80 transition-[background-color,border-color,box-shadow] motion-safe:active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
             className
           )}
         >
           <span
             id={triggerId === "picker-to-btn" ? "selected-target-text" : undefined}
-            className="truncate"
+            className="truncate font-medium"
           >
             {displayLabel}
           </span>
-          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden="true" />
+          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50 text-muted-foreground" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={cn("w-[260px] p-0", popoverClassName)}
+        className={cn("w-[260px] p-0 border-border/80 shadow-lg bg-popover", popoverClassName)}
         align={align}
       >
         <Command>
@@ -150,7 +150,7 @@ export function CurrencyCombobox({
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-3.5 w-3.5 shrink-0",
+                      "mr-2 h-3.5 w-3.5 shrink-0 text-accent",
                       !value ? "opacity-100" : "opacity-0"
                     )}
                     aria-hidden="true"
@@ -176,17 +176,17 @@ export function CurrencyCombobox({
                       <div className="flex items-center min-w-0">
                         <Check
                           className={cn(
-                            "mr-2 h-3.5 w-3.5 shrink-0",
+                            "mr-2 h-3.5 w-3.5 shrink-0 text-accent",
                             isSelected ? "opacity-100" : "opacity-0"
                           )}
                           aria-hidden="true"
                         />
-                        <span className="font-semibold">{c.code}</span>
-                        <span className="ml-2 font-sans text-muted-foreground truncate max-w-[120px]">
+                        <span className="font-medium text-foreground">{c.code}</span>
+                        <span className="ml-2 font-sans text-xs text-muted-foreground truncate max-w-[120px]">
                           {c.name}
                         </span>
                       </div>
-                      <span className="font-sans font-bold ml-1 shrink-0">
+                      <span className="font-mono text-xs text-muted-foreground ml-auto pl-2 shrink-0">
                         {c.symbol}
                       </span>
                     </CommandItem>

@@ -227,3 +227,64 @@ test('ui: Dynamic Island pill maintains single-capsule horizontal expansion arch
   assert.match(INLINE_UI_CSS, /\.cc-island-expandable\s*\{[^}]*grid-template-columns:\s*0fr/s, 'Expandable track must rest at 0fr');
   assert.match(INLINE_UI_CSS, /grid-template-columns:\s*1fr/, 'Expandable track must expand to 1fr on hover/focus');
 });
+
+test('ui: Dynamic Island micro-popover menu and auto-collapse behavior', async () => {
+  const { InPageUI } = await import('../src/content/ui.js');
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+  const doc = dom.window.document;
+
+  let selectedCurrency = null;
+  const ui = new InPageUI({
+    doc,
+    targetCurrency: 'USD',
+    isConverted: true,
+    convertedCount: 5,
+    autoCollapse: true,
+    onChangeCurrency: (cur) => { selectedCurrency = cur; }
+  });
+  ui.mount();
+
+  const selectBtn = ui.barElement.querySelector('.cc-select');
+  assert.ok(selectBtn, 'Must render .cc-select trigger');
+  assert.equal(selectBtn.value, 'USD');
+
+  // Verify popover menu is mounted in barContainer
+  const popover = ui.popoverMenu;
+  assert.ok(popover, 'Must render .cc-popover-menu in container');
+  assert.ok(!popover.classList.contains('cc-visible'), 'Popover is closed by default');
+
+  // Click trigger opens popover
+  selectBtn.click();
+  assert.ok(popover.classList.contains('cc-visible'), 'Clicking trigger opens popover');
+  assert.equal(selectBtn.getAttribute('aria-expanded'), 'true');
+
+  // Check currency items rendered
+  const items = popover.querySelectorAll('.cc-popover-item');
+  assert.ok(items.length > 10, 'Must render list of currency items');
+
+  // Find EUR item and click
+  const eurItem = Array.from(items).find(el => el.getAttribute('data-currency-code') === 'EUR');
+  assert.ok(eurItem, 'EUR item exists in list');
+  eurItem.click();
+
+  assert.equal(selectedCurrency, 'EUR', 'Selecting EUR invokes onChangeCurrency');
+  assert.equal(ui.targetCurrency, 'EUR');
+  assert.equal(selectBtn.value, 'EUR');
+  assert.ok(!popover.classList.contains('cc-visible'), 'Popover closes after selection');
+
+  // Test Auto-Collapse Timer: schedule with short delay
+  assert.equal(ui.isCollapsed, false);
+  ui.scheduleAutoCollapse(10);
+  await new Promise(r => setTimeout(r, 35));
+  assert.equal(ui.isCollapsed, true, 'Auto-collapse collapses to mini pill after timeout');
+  assert.equal(ui.barElement.style.display, 'none');
+  assert.equal(ui.collapsedElement.style.display, 'inline-flex');
+
+  // Expanding via click on mini pill restores full pill
+  ui.collapsedElement.click();
+  assert.equal(ui.isCollapsed, false, 'Clicking mini pill re-expands Dynamic Island');
+  assert.equal(ui.barElement.style.display, 'flex');
+
+  ui.unmount();
+});
+

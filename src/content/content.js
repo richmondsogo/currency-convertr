@@ -188,6 +188,7 @@ async function performConversion(options = {}) {
         rateDate,
         provider: rateProvider,
         theme: resolvePillTheme(),
+        autoCollapse: true,
         onShowOriginal: () => {
           performRevert();
         },

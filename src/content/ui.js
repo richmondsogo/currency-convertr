@@ -158,13 +158,13 @@ export const INLINE_UI_CSS = `
 /* Currency Code & Conversion Pair */
 .cc-currency-code {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--cc-text);
   letter-spacing: -0.01em;
 }
 
 .cc-count-sep {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--cc-muted);
   user-select: none;
 }
@@ -172,7 +172,7 @@ export const INLINE_UI_CSS = `
 /* Count Badge */
 .cc-count-badge {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--cc-text);
   background-color: var(--cc-raised);
@@ -220,7 +220,7 @@ export const INLINE_UI_CSS = `
 /* Live Exchange Rate */
 .cc-live-rate {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 400;
   color: var(--cc-muted);
   font-variant-numeric: tabular-nums;
@@ -244,7 +244,7 @@ export const INLINE_UI_CSS = `
   padding: 2px 9px;
   font-family: inherit;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 450;
   color: var(--cc-muted);
   cursor: pointer;
   transition: color 140ms ease, background-color 140ms ease;
@@ -258,6 +258,7 @@ export const INLINE_UI_CSS = `
 .cc-segment-btn.active {
   background: var(--cc-accent);
   color: var(--cc-accent-fg);
+  font-weight: 500;
 }
 
 .cc-segment-btn:active {
@@ -269,7 +270,7 @@ export const INLINE_UI_CSS = `
   outline-offset: 2px;
 }
 
-/* Quick currency select inside the island */
+/* Quick currency select trigger inside the island */
 .cc-select-wrapper {
   position: relative;
   display: inline-flex;
@@ -290,7 +291,10 @@ export const INLINE_UI_CSS = `
   border-radius: 6px;
   cursor: pointer;
   outline: none;
-  transition: border-color 140ms ease;
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .cc-select:hover {
@@ -302,7 +306,7 @@ export const INLINE_UI_CSS = `
   box-shadow: 0 0 0 3px var(--cc-ring);
 }
 
-/* Native option list follows the theme (color-scheme handles the popup chrome) */
+/* Option fallback follows theme tokens */
 .cc-select option {
   background-color: var(--cc-surface-solid);
   color: var(--cc-text);
@@ -315,6 +319,138 @@ export const INLINE_UI_CSS = `
   color: var(--cc-muted);
   display: flex;
   align-items: center;
+  transition: transform 140ms ease;
+}
+
+.cc-select[aria-expanded="true"] .cc-select-arrow {
+  transform: rotate(180deg);
+}
+
+/* Floating Glass Micro-Popover Menu */
+.cc-popover-menu {
+  position: relative;
+  margin-top: 6px;
+  width: 220px;
+  max-width: 90vw;
+  background-color: var(--cc-surface-solid);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--cc-hairline);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 var(--cc-highlight), var(--cc-shadow-lift);
+  display: none;
+  flex-direction: column;
+  z-index: 2147483647;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1), transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cc-popover-menu.cc-visible {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.cc-popover-search-wrap {
+  padding: 6px;
+  border-bottom: 1px solid var(--cc-hairline);
+}
+
+.cc-popover-search {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--cc-raised);
+  border: 1px solid var(--cc-hairline);
+  border-radius: 5px;
+  color: var(--cc-text);
+  font-family: inherit;
+  font-size: 11.5px;
+  padding: 4px 8px;
+  outline: none;
+  transition: border-color 140ms ease;
+}
+
+.cc-popover-search:focus {
+  border-color: var(--cc-accent);
+}
+
+.cc-popover-list {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cc-popover-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--cc-text);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  outline: none;
+  font-family: inherit;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+
+.cc-popover-item:hover,
+.cc-popover-item:focus-visible {
+  background: var(--cc-raised);
+  color: var(--cc-text);
+}
+
+.cc-popover-item.cc-active {
+  background: var(--cc-accent);
+  color: var(--cc-accent-fg);
+}
+
+.cc-popover-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 500;
+  font-size: 11.5px;
+}
+
+.cc-popover-name {
+  color: var(--cc-muted);
+  font-size: 11px;
+  margin-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.cc-popover-item.cc-active .cc-popover-name {
+  color: var(--cc-accent-fg);
+  opacity: 0.85;
+}
+
+.cc-popover-symbol {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: var(--cc-muted);
+  margin-left: 8px;
+}
+
+.cc-popover-item.cc-active .cc-popover-symbol {
+  color: var(--cc-accent-fg);
+}
+
+.cc-popover-empty {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--cc-muted);
 }
 
 /* Dismiss / Close Button */
@@ -515,6 +651,7 @@ export class InPageUI {
     rateDate = null,
     provider = null,
     theme = 'system',
+    autoCollapse = false,
     onShowOriginal = null,
     onConvert = null,
     onChangeCurrency = null,
@@ -528,6 +665,7 @@ export class InPageUI {
     this.rateDate = rateDate;
     this.provider = provider;
     this.theme = theme;
+    this.autoCollapse = autoCollapse;
     this.onShowOriginal = onShowOriginal;
     this.onConvert = onConvert;
     this.onChangeCurrency = onChangeCurrency;
@@ -537,10 +675,19 @@ export class InPageUI {
     this.shadowRoot = null;
     this.barContainer = null;
     this.barElement = null;
+    this.popoverMenu = null;
+    this.popoverSearch = null;
+    this.popoverList = null;
+    this.selectButton = null;
+    this.selectText = null;
     this.collapsedElement = null;
     this.tooltipElement = null;
     this.isDismissedForSession = false;
     this.isCollapsed = false;
+    this.isMenuOpen = false;
+    this.isHovered = false;
+    this.autoCollapseTimer = null;
+    this._onDocPointerDown = null;
 
     // Dragging state
     this.isDragging = false;
@@ -595,6 +742,10 @@ export class InPageUI {
     this.barElement = this._buildDynamicIsland();
     this.barContainer.appendChild(this.barElement);
 
+    // Build Floating Glass Micro-Popover Menu for Currency Selection
+    this.popoverMenu = this._buildPopoverMenu();
+    this.barContainer.appendChild(this.popoverMenu);
+
     // Build Collapsed Pill (for toggleCollapse compatibility)
     this.collapsedElement = this._buildCollapsedPill();
     this.barContainer.appendChild(this.collapsedElement);
@@ -607,6 +758,7 @@ export class InPageUI {
     parent.appendChild(this.rootContainer);
 
     this._setupDragging();
+    this._setupAutoCollapse();
 
     if (this.isDismissedForSession) {
       this.barElement.style.display = 'none';
@@ -725,24 +877,42 @@ export class InPageUI {
     const selectWrapper = this.doc.createElement('div');
     selectWrapper.className = 'cc-select-wrapper';
 
-    const select = this.doc.createElement('select');
+    const select = this.doc.createElement('button');
     select.className = 'cc-select';
+    select.setAttribute('type', 'button');
+    select.setAttribute('role', 'combobox');
+    select.setAttribute('aria-haspopup', 'listbox');
+    select.setAttribute('aria-expanded', 'false');
     select.setAttribute('aria-label', 'Change target currency');
 
-    const currencies = getAllCurrencies({ includeCrypto: false });
-    for (const c of currencies) {
-      const opt = this.doc.createElement('option');
-      opt.value = c.code;
-      opt.textContent = `${c.code} (${c.symbol})`;
-      if (c.code === this.targetCurrency) opt.selected = true;
-      select.appendChild(opt);
-    }
+    let curVal = this.targetCurrency;
+    const selectText = this.doc.createElement('span');
+    selectText.className = 'cc-select-text';
+    selectText.textContent = this.targetCurrency;
+    select.appendChild(selectText);
+
+    Object.defineProperty(select, 'value', {
+      get: () => curVal,
+      set: (val) => {
+        curVal = val;
+        selectText.textContent = val;
+      },
+      configurable: true
+    });
+
+    select.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this._togglePopover();
+    });
 
     select.addEventListener('change', (e) => {
-      const newCur = e.target.value;
+      const newCur = select.value;
       if (newCur && newCur !== this.targetCurrency) {
         this.targetCurrency = newCur;
-        codeSpan.textContent = newCur;
+        codeSpan.textContent = this.sourceCurrency && this.sourceCurrency !== this.targetCurrency
+          ? `${this.sourceCurrency} → ${this.targetCurrency}`
+          : this.targetCurrency;
         this.update({ isConverted: true, targetCurrency: newCur });
         if (this.onChangeCurrency) this.onChangeCurrency(newCur);
       }
@@ -757,10 +927,13 @@ export class InPageUI {
       [{ d: 'm6 9 6 6 6-6' }]
     );
     selectArrow.setAttribute('class', 'cc-select-arrow');
+    select.appendChild(selectArrow);
 
     selectWrapper.appendChild(select);
-    selectWrapper.appendChild(selectArrow);
     expandableContent.appendChild(selectWrapper);
+
+    this.selectButton = select;
+    this.selectText = selectText;
 
     // Dismiss / Close Button (Clean '×' icon, zero innerHTML)
     const btnDismiss = this.doc.createElement('button');
@@ -795,6 +968,157 @@ export class InPageUI {
     return island;
   }
 
+  _buildPopoverMenu() {
+    const popover = this.doc.createElement('div');
+    popover.className = 'cc-popover-menu';
+    popover.setAttribute('role', 'listbox');
+    popover.setAttribute('aria-label', 'Select target currency');
+
+    const searchWrap = this.doc.createElement('div');
+    searchWrap.className = 'cc-popover-search-wrap';
+
+    const searchInput = this.doc.createElement('input');
+    searchInput.className = 'cc-popover-search';
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search currency...';
+    searchInput.setAttribute('aria-label', 'Search currencies');
+    searchWrap.appendChild(searchInput);
+    popover.appendChild(searchWrap);
+
+    const list = this.doc.createElement('div');
+    list.className = 'cc-popover-list';
+    popover.appendChild(list);
+
+    this.popoverSearch = searchInput;
+    this.popoverList = list;
+
+    const renderItems = (filter = '') => {
+      list.replaceChildren();
+      const currencies = getAllCurrencies({ includeCrypto: false });
+      const cleanFilter = filter.trim().toLowerCase();
+      const filtered = cleanFilter
+        ? currencies.filter(c => c.code.toLowerCase().includes(cleanFilter) || c.name.toLowerCase().includes(cleanFilter))
+        : currencies;
+
+      if (filtered.length === 0) {
+        const empty = this.doc.createElement('div');
+        empty.className = 'cc-popover-empty';
+        empty.textContent = 'No currencies found';
+        list.appendChild(empty);
+        return;
+      }
+
+      for (const c of filtered) {
+        const item = this.doc.createElement('button');
+        item.type = 'button';
+        item.className = `cc-popover-item ${c.code === this.targetCurrency ? 'cc-active' : ''}`;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', c.code === this.targetCurrency ? 'true' : 'false');
+        item.setAttribute('data-currency-code', c.code);
+
+        const codeSpan = this.doc.createElement('span');
+        codeSpan.className = 'cc-popover-code';
+        codeSpan.textContent = c.code;
+        item.appendChild(codeSpan);
+
+        const nameSpan = this.doc.createElement('span');
+        nameSpan.className = 'cc-popover-name';
+        nameSpan.textContent = c.name;
+        item.appendChild(nameSpan);
+
+        const symSpan = this.doc.createElement('span');
+        symSpan.className = 'cc-popover-symbol';
+        symSpan.textContent = c.symbol;
+        item.appendChild(symSpan);
+
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this._selectCurrency(c.code);
+        });
+
+        list.appendChild(item);
+      }
+    };
+
+    searchInput.addEventListener('input', (e) => {
+      renderItems(e.target.value);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this._closePopover();
+        this.selectButton?.focus();
+      } else if (e.key === 'ArrowDown') {
+        const first = list.querySelector('.cc-popover-item');
+        if (first) first.focus();
+      }
+    });
+
+    popover.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this._closePopover();
+        this.selectButton?.focus();
+      }
+    });
+
+    this._renderPopoverItems = renderItems;
+    return popover;
+  }
+
+  _openPopover() {
+    if (!this.popoverMenu) return;
+    this.isMenuOpen = true;
+    this._clearAutoCollapseTimer();
+    this.popoverMenu.classList.add('cc-visible');
+    this.selectButton?.setAttribute('aria-expanded', 'true');
+    if (this._renderPopoverItems) {
+      if (this.popoverSearch) this.popoverSearch.value = '';
+      this._renderPopoverItems('');
+    }
+    setTimeout(() => {
+      this.popoverSearch?.focus();
+    }, 50);
+  }
+
+  _closePopover() {
+    if (!this.popoverMenu) return;
+    this.isMenuOpen = false;
+    this.popoverMenu.classList.remove('cc-visible');
+    this.selectButton?.setAttribute('aria-expanded', 'false');
+    if (this.autoCollapse && this.isConverted && !this.isHovered) {
+      this.scheduleAutoCollapse();
+    }
+  }
+
+  _togglePopover() {
+    if (this.isMenuOpen) {
+      this._closePopover();
+    } else {
+      this._openPopover();
+    }
+  }
+
+  _selectCurrency(newCur) {
+    if (newCur && newCur !== this.targetCurrency) {
+      this.targetCurrency = newCur;
+      if (this.selectButton) {
+        this.selectButton.value = newCur;
+      }
+      const codeSpan = this.barElement?.querySelector('.cc-currency-code');
+      if (codeSpan) {
+        codeSpan.textContent = this.sourceCurrency && this.sourceCurrency !== this.targetCurrency
+          ? `${this.sourceCurrency} → ${this.targetCurrency}`
+          : this.targetCurrency;
+      }
+      this.update({ isConverted: true, targetCurrency: newCur });
+      if (this.onChangeCurrency) {
+        this.onChangeCurrency(newCur);
+      }
+    }
+    this._closePopover();
+  }
+
   _buildCollapsedPill() {
     const mini = this.doc.createElement('button');
     mini.className = 'cc-collapsed-pill cc-bar-collapsed';
@@ -819,6 +1143,70 @@ export class InPageUI {
     return mini;
   }
 
+  _setupAutoCollapse() {
+    if (!this.barElement) return;
+
+    this.barElement.addEventListener('pointerenter', () => {
+      this.isHovered = true;
+      this._clearAutoCollapseTimer();
+    });
+
+    this.barElement.addEventListener('pointerleave', () => {
+      this.isHovered = false;
+      if (this.autoCollapse && this.isConverted && !this.isMenuOpen) {
+        this.scheduleAutoCollapse();
+      }
+    });
+
+    this.barElement.addEventListener('focusin', () => {
+      this.isHovered = true;
+      this._clearAutoCollapseTimer();
+    });
+
+    this.barElement.addEventListener('focusout', (e) => {
+      if (this.barContainer && e.relatedTarget && this.barContainer.contains(e.relatedTarget)) {
+        return;
+      }
+      this.isHovered = false;
+      if (this.autoCollapse && this.isConverted && !this.isMenuOpen) {
+        this.scheduleAutoCollapse();
+      }
+    });
+
+    // Dismiss popover on outside click
+    this._onDocPointerDown = (e) => {
+      if (!this.isMenuOpen) return;
+      const target = e.target;
+      if (this.rootContainer && !this.rootContainer.contains(target) && !this.shadowRoot?.contains(target)) {
+        this._closePopover();
+      }
+    };
+    this.doc.addEventListener('pointerdown', this._onDocPointerDown);
+
+    if (this.autoCollapse && this.isConverted && !this.isCollapsed) {
+      this.scheduleAutoCollapse();
+    }
+  }
+
+  scheduleAutoCollapse(delay = 3500) {
+    this._clearAutoCollapseTimer();
+    if (this.isDismissedForSession || this.isCollapsed || this.isHovered || this.isMenuOpen || this.isDragging) {
+      return;
+    }
+    this.autoCollapseTimer = setTimeout(() => {
+      if (!this.isHovered && !this.isMenuOpen && !this.isDragging && !this.isDismissedForSession) {
+        this.toggleCollapse(true);
+      }
+    }, delay);
+  }
+
+  _clearAutoCollapseTimer() {
+    if (this.autoCollapseTimer) {
+      clearTimeout(this.autoCollapseTimer);
+      this.autoCollapseTimer = null;
+    }
+  }
+
   _setupDragging() {
     if (!this.barContainer || !this.barElement) return;
 
@@ -829,7 +1217,8 @@ export class InPageUI {
         target.tagName === 'SELECT' ||
         target.tagName === 'OPTION' ||
         target.closest('button') ||
-        target.closest('select')
+        target.closest('select') ||
+        target.closest('.cc-popover-menu')
       ) {
         return;
       }
@@ -884,20 +1273,26 @@ export class InPageUI {
     this.collapsedElement.addEventListener('pointerdown', onPointerDown);
   }
 
-  toggleCollapse() {
-    this.isCollapsed = !this.isCollapsed;
+  toggleCollapse(forceState) {
+    this.isCollapsed = typeof forceState === 'boolean' ? forceState : !this.isCollapsed;
     if (this.isCollapsed) {
+      this._closePopover();
       this.barElement.style.display = 'none';
       this.collapsedElement.style.display = 'inline-flex';
     } else {
       this.collapsedElement.style.display = 'none';
       this.barElement.style.display = 'flex';
+      if (this.autoCollapse && this.isConverted) {
+        this.scheduleAutoCollapse();
+      }
     }
   }
 
   dismiss() {
     if (!this.barElement) return;
     this.isDismissedForSession = true;
+    this._clearAutoCollapseTimer();
+    this._closePopover();
     try {
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem('cc_bar_dismissed', 'true');
@@ -912,6 +1307,8 @@ export class InPageUI {
   }
 
   hide() {
+    this._clearAutoCollapseTimer();
+    this._closePopover();
     if (this.barElement) {
       this.barElement.style.display = 'none';
     }
@@ -934,6 +1331,9 @@ export class InPageUI {
     }
     if (this.collapsedElement) {
       this.collapsedElement.style.display = 'none';
+    }
+    if (this.autoCollapse && this.isConverted) {
+      this.scheduleAutoCollapse();
     }
   }
 
@@ -993,6 +1393,10 @@ export class InPageUI {
 
     if (!this.isDismissedForSession && this.barElement.style.display === 'none' && !this.isCollapsed) {
       this.barElement.style.display = 'flex';
+    }
+
+    if (this.autoCollapse && this.isConverted && !this.isCollapsed) {
+      this.scheduleAutoCollapse();
     }
   }
 
@@ -1071,6 +1475,12 @@ export class InPageUI {
   }
 
   unmount() {
+    this._clearAutoCollapseTimer();
+    this._closePopover();
+    if (this._onDocPointerDown) {
+      this.doc.removeEventListener('pointerdown', this._onDocPointerDown);
+      this._onDocPointerDown = null;
+    }
     if (this.rootContainer && this.rootContainer.parentNode) {
       this.rootContainer.parentNode.removeChild(this.rootContainer);
       this.rootContainer = null;

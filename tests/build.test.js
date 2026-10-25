@@ -45,9 +45,7 @@ test('build: manifest structure and permissions for Chrome', () => {
   assert.deepEqual(manifest.permissions.sort(), expectedPermissions.sort());
 
   const expectedHostPermissions = [
-    '<all_urls>',
-    'http://*/*',
-    'https://*/*'
+    '<all_urls>'
   ];
   assert.deepEqual(manifest.host_permissions.sort(), expectedHostPermissions.sort());
 
@@ -78,9 +76,7 @@ test('build: manifest structure and permissions for Firefox', () => {
   assert.deepEqual(manifest.permissions.sort(), expectedPermissions.sort());
 
   const expectedHostPermissions = [
-    '<all_urls>',
-    'http://*/*',
-    'https://*/*'
+    '<all_urls>'
   ];
   assert.deepEqual(manifest.host_permissions.sort(), expectedHostPermissions.sort());
 
