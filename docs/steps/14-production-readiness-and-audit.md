@@ -1,6 +1,8 @@
 # Step 14: Production Readiness, Security Hardening, and Pre-Flight Audit
 
 **Branch**: `step/14-production-readiness-and-audit`  
+**Pull Request**: [#20](https://github.com/richmondsogo/currency-convertr/pull/20)  
+**Landed Commit**: `836a5cc` (Merge Commit: `9fd3967`)  
 **Target Version**: `2.0.0` / `2.1.0`  
 **Repository Remote**: `https://github.com/richmondsogo/currency-convertr.git`  
 **Date**: 2026-10-25  
