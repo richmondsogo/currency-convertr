@@ -1,6 +1,8 @@
 # Step 15: Production Polish, Documentation Deslop, and Visual Overhaul
 
 **Branch**: `step/15-production-polish-and-visual-overhaul`  
+**Pull Request**: [#21](https://github.com/richmondsogo/currency-convertr/pull/21)  
+**Commit**: `39cd460`  
 **Target Version**: `2.0.0`  
 **Repository Remote**: `https://github.com/richmondsogo/currency-convertr.git`  
 **Date**: 2026-10-25  
