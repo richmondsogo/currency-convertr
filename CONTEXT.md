@@ -82,12 +82,12 @@ All conversion requests feed into a single, unified conversion pipeline in the b
 - **Action Popup Surface**: Restyled in React 19 + Tailwind + shadcn/ui (Step 08) following the Paper & Pine design system, sharing core UI components (`SiteModeControl`, `CurrencyCombobox`), 3-way site mode segmented control, page-scoped target currency overrides (never mutating default settings), honest error classification, and resolved Firefox MV3 content script injection.
 - **Cross-Browser Reliability & Interaction Polish**: Stabilized in Step 09 with decoupled concurrent initialization, bounded exponential backoff on Firefox message delivery, and Pine-aligned converted price highlights.
 - **Dynamic Island Capsule & Theme-Aware Pill (Steps 10 & 11)**: Single-capsule Dynamic Island pill (`src/content/ui.js`, `src/content/ui.css`) themed with Paper & Pine tokens (`--cc-*` on `.cc-island-container`, ADR 0015) that loads the saved extension Theme setting (`system` | `light` | `dark`) before first paint and honors OS `prefers-color-scheme`, `prefers-reduced-transparency`, `prefers-contrast`, and `prefers-reduced-motion`; paired with a decluttered, boxless toolbar popup (`>= 12px` type scale).
+- **Production Design Overhaul (Step 12)**: Standardized typography to 400/500/600 removing overbold text; redesigned switch to tactile 20px micro-switch; repaired combobox contrast from 1.1:1 to >12:1 (WCAG AAA); implemented custom glass popover in the pill; wired 3.5s auto-collapse timer; consolidated manifest permissions.
+- **UI Interaction, Contrast & Cryptocurrency Fixes (Step 13)**: Integrated full cryptocurrency support into the Dynamic Island pill selection popover; upgraded segmented controls to tactile elevated card pills; resolved cmdk search input focus loss during continuous typing; expanded combobox popover width to 280px and eliminated Windows scrollbar symbol clipping.
 - **Auto-Convert & Idempotency**: Consolidated into a single `tabs.onUpdated` mechanism; content script re-injection is strictly idempotent; top-frame isolated.
 - **Price Tokenization**: Trailing ISO codes (`$25 CAD`) and compound prefixes (`US $133.00`) fully consumed.
 
 ---
 
 ## Known Issues & Implementation Gaps
-1. **Auto-Collapse Implementation Gap**: `DESIGN.md` documented a 3.5s auto-collapse for the Dynamic Island pill, but this was never wired in code. It must be explicitly defined for `CONVERTED` and forbidden for `OFFER`.
-2. **Redundant Manifest Permissions**: `manifest.json` ships `host_permissions: ["<all_urls>", "http://*/*", "https://*/*"]` and `permissions: [..., "tabs"]`. The wildcard duplicates require cleanup.
-3. **Combobox Component Overhaul**: Native `<select>` inside the Dynamic Island pill has a dark theme CSS stopgap (Step 05), but requires a full custom searchable combobox component.
+*(All primary v2.0.0 gaps resolved. Ready for v2.1.0 release packaging.)*
