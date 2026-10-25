@@ -259,8 +259,13 @@ if (api && api.runtime && api.runtime.onMessage) {
       return true;
     }
 
-    // Settings update
+    // Settings update - restricted to extension internal pages (popup, options)
     if (message.type === MSG.UPDATE_SETTINGS) {
+      const isInternal = sender.id === api.runtime.id && (!sender.url || sender.url.startsWith('chrome-extension://') || sender.url.startsWith('moz-extension://'));
+      if (!isInternal) {
+        sendResponse({ success: false, error: 'Unauthorized: Settings cannot be modified by content scripts' });
+        return false;
+      }
       settingsManager.updateSettings(message.payload || {})
         .then(updated => {
           buildMenus();

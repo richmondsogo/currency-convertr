@@ -351,18 +351,6 @@ function initContentScript() {
       }
     });
   }
-
-  // Standalone window message receiver for test rigs and headless verification
-  if (typeof window !== 'undefined') {
-    window.addEventListener('message', (event) => {
-      if (!event.data || typeof event.data !== 'object') return;
-      if (event.data.type === 'CC_MANUAL_CONVERT') {
-        performConversion(event.data);
-      } else if (event.data.type === 'CC_MANUAL_REVERT') {
-        performRevert();
-      }
-    });
-  }
 }
 
 // Top-level idempotency guard: re-injection is a clean no-op leaving existing instance intact

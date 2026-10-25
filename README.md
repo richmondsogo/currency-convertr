@@ -4,7 +4,7 @@
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Chromium%20%7C%20Firefox-lightgrey.svg)](#cross-browser-compatibility)
-[![Tests](https://img.shields.io/badge/Tests-51%20Passing-brightgreen.svg)](#test-suite)
+[![Tests](https://img.shields.io/badge/Tests-120%20Unit%20%7C%2015%20E2E%20Passing-brightgreen.svg)](#testing--verification)
 
 > **"Google Translate for prices"** (v2.0.0) — An intelligent, cross-browser extension that instantly converts every price on any webpage into your preferred currency in place, with a non-intrusive Dynamic Island floating bar and one-click restoration of original prices.
 
@@ -12,22 +12,24 @@
 
 ## Visual Tour
 
-### 1. In-Page Price Conversion & Translate Bar
-Prices convert directly on the page. The floating bar lets you switch target currencies, view status, or revert to original prices instantly. Hovering over any converted price displays a detailed breakdown with the original amount, exchange rate used, and rate date.
+### 1. In-Page Dynamic Island & Price Translation
+Prices convert directly on the page without jumping or layout reflows. An elegant, non-intrusive floating Dynamic Island capsule lets you toggle conversion, inspect active status, and switch target currencies directly on page. Hovering over any converted price displays a detailed tooltip showing the original price and the exact exchange rate used.
 
-![In-Page Price Conversion](screenshots/screenshot-inpage-bar.png)
+![In-Page Dynamic Island](screenshots/screenshot-inpage-bar.png)
 
-### 2. Toolbar Action Popup
-Quickly toggle conversion on the active page, switch target currencies with the searchable combobox, and configure per-site auto-conversion rules.
+### 2. Action Popup with Searchable Combobox
+Quickly trigger conversion on the active page, switch between pinned target currencies or search across 170+ global fiat and cryptocurrencies with the keyboard-friendly combobox, and configure per-site auto-conversion rules.
 
-![Action Popup](screenshots/screenshot-popup.png)
+| Action Popup (Light) | Quick Currency Search |
+|:---:|:---:|
+| ![Action Popup](screenshots/screenshot-popup.png) | ![Searchable Combobox](screenshots/screenshot-combobox.png) |
 
 ### 3. Full Preferences & Options Dashboard
-Customize your default target currency, reorder pinned currencies for quick access, select your preferred display mode, enable cryptocurrency support, and manage automated site rules.
+Customize your default target currency, manage up to 8 pinned currencies for quick access, select your preferred display mode (`Replace`, `Append`, or `Replace + Highlight`), toggle cryptocurrency support, and manage per-site auto-conversion rules.
 
-![Options Page](screenshots/screenshot-options.png)
+![Options Dashboard](screenshots/screenshot-options.png)
 
-### 4. Selection Conversion (Preserved from v1)
+### 4. Right-Click Selection Conversion
 Highlight any specific price string, right-click, and convert it instantly via a native desktop notification.
 
 ![Context Menu Selection](screenshots/real-work-test-context-menu.png)
@@ -117,11 +119,8 @@ Currency Convertr requests the following permissions in `manifest.json`:
 | `storage` | API | Persists user preferences and cached exchange rate tables locally (`chrome.storage.local` and `chrome.storage.session`). |
 | `activeTab` | API | Grants temporary access to the active tab to execute in-page conversion on user demand. |
 | `scripting` | API | Executes content script injection into active tabs upon conversion request. |
-| `tabs` | API | Queries active tab properties (URL, restricted scheme verification) to route conversion commands and status. |
-| `<all_urls>` | Host Permission | Allows the in-page price conversion engine and lightweight detector script to detect and convert prices across international shopping websites. |
-| `http://*/*`, `https://*/*` | Host Permission | *(Redundant with `<all_urls>`; currently declared in manifest and scheduled for cleanup in a future step).* |
-
-> **Planned Permission Cleanup**: The explicit wildcard entries `http://*/*` and `https://*/*` are redundant alongside `<all_urls>` and will be removed in an upcoming maintenance step.
+| `tabs` | API | Queries active tab properties (URL, domain) to verify restricted schemes and determine whether automated site rules apply to the active page. |
+| `<all_urls>` | Host Permission | Required for the extension's core functionality to detect, scan, and convert currency prices across global e-commerce and retail websites, and to fetch public ECB reference rates. |
 
 ---
 

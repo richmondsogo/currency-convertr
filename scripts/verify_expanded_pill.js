@@ -73,7 +73,12 @@ const testPageContent = `<!DOCTYPE html>
           if (cb) cb({});
           return Promise.resolve({});
         },
-        onMessage: { addListener: () => {} }
+        listeners: [],
+        onMessage: {
+          addListener: function(fn) {
+            window.chrome.runtime.listeners.push(fn);
+          }
+        }
       }
     };
   </script>
@@ -81,16 +86,18 @@ const testPageContent = `<!DOCTYPE html>
     ${contentBundle}
   </script>
   <script>
-    // Trigger conversion directly with rates table
-    window.postMessage({
-      type: 'CC_MANUAL_CONVERT',
-      targetCurrency: 'USD',
-      manual: true,
-      showInPageBar: true,
-      ratesTable: { EUR: 1.0, USD: 1.08, GBP: 0.85, NGN: 1750.0 },
-      rateDate: '2026-10-20',
-      provider: 'ECB'
-    }, '*');
+    // Trigger conversion directly through extension messaging
+    window.chrome.runtime.listeners.forEach(fn => fn({
+      type: 'CC_CONVERT_PAGE',
+      options: {
+        targetCurrency: 'USD',
+        manual: true,
+        showInPageBar: true,
+        ratesTable: { EUR: 1.0, USD: 1.08, GBP: 0.85, NGN: 1750.0 },
+        rateDate: '2026-10-20',
+        provider: 'ECB'
+      }
+    }, {}, () => {}));
 
     // Force expanded class on pill shadow root for screenshot verification
     setTimeout(() => {

@@ -24,12 +24,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/richmondsogo/currency-converter-v2.git"
+    "url": "https://github.com/richmondsogo/currency-convertr.git"
   },
   "bugs": {
-    "url": "https://github.com/richmondsogo/currency-converter-v2/issues"
+    "url": "https://github.com/richmondsogo/currency-convertr/issues"
   },
-  "homepage": "https://github.com/richmondsogo/currency-converter-v2#readme",
+  "homepage": "https://github.com/richmondsogo/currency-convertr#readme",
   "devDependencies": {
     "esbuild": "^0.28.2",
     "jsdom": "^29.1.1",

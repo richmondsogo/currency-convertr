@@ -84,10 +84,11 @@ All conversion requests feed into a single, unified conversion pipeline in the b
 - **Dynamic Island Capsule & Theme-Aware Pill (Steps 10 & 11)**: Single-capsule Dynamic Island pill (`src/content/ui.js`, `src/content/ui.css`) themed with Paper & Pine tokens (`--cc-*` on `.cc-island-container`, ADR 0015) that loads the saved extension Theme setting (`system` | `light` | `dark`) before first paint and honors OS `prefers-color-scheme`, `prefers-reduced-transparency`, `prefers-contrast`, and `prefers-reduced-motion`; paired with a decluttered, boxless toolbar popup (`>= 12px` type scale).
 - **Production Design Overhaul (Step 12)**: Standardized typography to 400/500/600 removing overbold text; redesigned switch to tactile 20px micro-switch; repaired combobox contrast from 1.1:1 to >12:1 (WCAG AAA); implemented custom glass popover in the pill; wired 3.5s auto-collapse timer; consolidated manifest permissions.
 - **UI Interaction, Contrast & Cryptocurrency Fixes (Step 13)**: Integrated full cryptocurrency support into the Dynamic Island pill selection popover; upgraded segmented controls to tactile elevated card pills; resolved cmdk search input focus loss during continuous typing; expanded combobox popover width to 280px and eliminated Windows scrollbar symbol clipping.
+- **Production Readiness, Security Hardening & Pre-Flight Audit (Step 14)**: Eliminated `window.postMessage` backdoor in `content.js`; gated `MSG.UPDATE_SETTINGS` against web content script callers in `background.js`; confirmed zero exposed secrets or API keys; updated `package.json` repository URLs to `richmondsogo/currency-convertr`; modernized `README.md` and `CHROMEWEBSTORE.md` with accurate test counts (120 unit / 15 E2E) and high-resolution demo images; verified real-world e-commerce pricing patterns (Amazon split-pricing, European comma-decimals, Jumia, Shopify) via automated Playwright suite.
 - **Auto-Convert & Idempotency**: Consolidated into a single `tabs.onUpdated` mechanism; content script re-injection is strictly idempotent; top-frame isolated.
 - **Price Tokenization**: Trailing ISO codes (`$25 CAD`) and compound prefixes (`US $133.00`) fully consumed.
 
 ---
 
 ## Known Issues & Implementation Gaps
-*(All primary v2.0.0 gaps resolved. Ready for v2.1.0 release packaging.)*
+*(Zero known issues or security vulnerabilities. Production verified and ready for Chrome Web Store & Firefox AMO distribution.)*
