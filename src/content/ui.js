@@ -42,8 +42,8 @@ export const INLINE_UI_CSS = `
   --cc-ring: rgba(30, 107, 82, 0.4);
   --cc-highlight: rgba(255, 255, 255, 0.7);
   --cc-glow: none;
-  --cc-shadow: 0 10px 28px -8px rgba(25, 24, 21, 0.22), 0 2px 6px -1px rgba(25, 24, 21, 0.1);
-  --cc-shadow-lift: 0 14px 34px -8px rgba(25, 24, 21, 0.28), 0 4px 10px -1px rgba(25, 24, 21, 0.12);
+  --cc-shadow: 0 1px 2px rgba(25, 24, 21, 0.05), 0 6px 16px -4px rgba(25, 24, 21, 0.12), 0 14px 28px -8px rgba(25, 24, 21, 0.16);
+  --cc-shadow-lift: 0 2px 4px rgba(25, 24, 21, 0.06), 0 10px 24px -4px rgba(25, 24, 21, 0.16), 0 20px 36px -8px rgba(25, 24, 21, 0.20);
 }
 
 /* System theme on a dark OS (an explicit light setting always wins). */
@@ -61,8 +61,8 @@ export const INLINE_UI_CSS = `
     --cc-ring: rgba(111, 211, 166, 0.4);
     --cc-highlight: rgba(255, 255, 255, 0.06);
     --cc-glow: 0 0 8px rgba(111, 211, 166, 0.5);
-    --cc-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.6), 0 2px 6px -1px rgba(0, 0, 0, 0.35);
-    --cc-shadow-lift: 0 14px 34px -8px rgba(0, 0, 0, 0.7), 0 4px 10px -1px rgba(0, 0, 0, 0.4);
+    --cc-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 16px -4px rgba(0, 0, 0, 0.45), 0 14px 28px -8px rgba(0, 0, 0, 0.55);
+    --cc-shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 10px 24px -4px rgba(0, 0, 0, 0.55), 0 20px 36px -8px rgba(0, 0, 0, 0.65);
   }
 }
 
@@ -80,8 +80,8 @@ export const INLINE_UI_CSS = `
   --cc-ring: rgba(111, 211, 166, 0.4);
   --cc-highlight: rgba(255, 255, 255, 0.06);
   --cc-glow: 0 0 8px rgba(111, 211, 166, 0.5);
-  --cc-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.6), 0 2px 6px -1px rgba(0, 0, 0, 0.35);
-  --cc-shadow-lift: 0 14px 34px -8px rgba(0, 0, 0, 0.7), 0 4px 10px -1px rgba(0, 0, 0, 0.4);
+  --cc-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 16px -4px rgba(0, 0, 0, 0.45), 0 14px 28px -8px rgba(0, 0, 0, 0.55);
+  --cc-shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 10px 24px -4px rgba(0, 0, 0, 0.55), 0 20px 36px -8px rgba(0, 0, 0, 0.65);
 }
 
 .cc-island-container {
@@ -116,8 +116,8 @@ export const INLINE_UI_CSS = `
   will-change: transform, opacity;
   transform-origin: center top;
   transition:
-    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1),
     border-color 150ms ease,
     opacity 200ms ease;
 }
@@ -186,7 +186,7 @@ export const INLINE_UI_CSS = `
 .cc-island-expandable {
   display: grid;
   grid-template-columns: 0fr;
-  transition: grid-template-columns 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: grid-template-columns 240ms cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
@@ -205,8 +205,8 @@ export const INLINE_UI_CSS = `
   opacity: 0;
   transform: translateX(-4px);
   transition:
-    opacity 240ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
 }
 
@@ -238,6 +238,7 @@ export const INLINE_UI_CSS = `
 }
 
 .cc-segment-btn {
+  position: relative;
   background: transparent;
   border: none;
   border-radius: 9999px;
@@ -249,6 +250,17 @@ export const INLINE_UI_CSS = `
   cursor: pointer;
   transition: color 140ms ease, background-color 140ms ease;
   outline: none;
+}
+
+.cc-segment-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 36px;
+  pointer-events: auto;
 }
 
 .cc-segment-btn:hover {
@@ -344,13 +356,23 @@ export const INLINE_UI_CSS = `
   overflow: hidden;
   opacity: 0;
   transform: translateY(-4px) scale(0.98);
-  transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1), transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 160ms cubic-bezier(0.16, 1, 0.3, 1), transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cc-popover-menu.cc-visible,
+.cc-popover-menu.cc-exiting {
+  display: flex;
 }
 
 .cc-popover-menu.cc-visible {
-  display: flex;
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+
+.cc-popover-menu.cc-exiting {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  transition: opacity 120ms cubic-bezier(0.4, 0, 1, 1), transform 120ms cubic-bezier(0.4, 0, 1, 1);
 }
 
 .cc-popover-search-wrap {
@@ -455,6 +477,7 @@ export const INLINE_UI_CSS = `
 
 /* Dismiss / Close Button */
 .cc-dismiss-btn {
+  position: relative;
   background: transparent;
   border: none;
   color: var(--cc-muted);
@@ -466,6 +489,17 @@ export const INLINE_UI_CSS = `
   cursor: pointer;
   transition: color 140ms ease, background-color 140ms ease, transform 140ms ease;
   outline: none;
+}
+
+.cc-dismiss-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+  pointer-events: auto;
 }
 
 .cc-dismiss-btn:hover {
@@ -601,6 +635,7 @@ export const INLINE_UI_CSS = `
   .cc-dynamic-island,
   .cc-island-expandable,
   .cc-island-expandable-content,
+  .cc-popover-menu,
   .cc-collapsed-pill,
   .cc-tooltip {
     transition: none !important;
@@ -1072,6 +1107,7 @@ export class InPageUI {
     if (!this.popoverMenu) return;
     this.isMenuOpen = true;
     this._clearAutoCollapseTimer();
+    this.popoverMenu.classList.remove('cc-exiting');
     this.popoverMenu.classList.add('cc-visible');
     this.selectButton?.setAttribute('aria-expanded', 'true');
     if (this._renderPopoverItems) {
@@ -1086,8 +1122,15 @@ export class InPageUI {
   _closePopover() {
     if (!this.popoverMenu) return;
     this.isMenuOpen = false;
-    this.popoverMenu.classList.remove('cc-visible');
     this.selectButton?.setAttribute('aria-expanded', 'false');
+    const wasVisible = this.popoverMenu.classList.contains('cc-visible');
+    this.popoverMenu.classList.remove('cc-visible');
+    if (wasVisible) {
+      this.popoverMenu.classList.add('cc-exiting');
+      setTimeout(() => {
+        this.popoverMenu?.classList.remove('cc-exiting');
+      }, 120);
+    }
     if (this.autoCollapse && this.isConverted && !this.isHovered) {
       this.scheduleAutoCollapse();
     }

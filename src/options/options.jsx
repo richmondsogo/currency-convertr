@@ -86,6 +86,7 @@ import {
   validateImportContent,
 } from "@/ui/lib/site-rules";
 import { applyTheme, subscribeSystemTheme } from "../shared/theme.js";
+import { playTactileClick } from "../shared/audio.js";
 
 const api = getBrowser();
 
@@ -780,6 +781,35 @@ export function OptionsApp() {
                     id="switch-round-whole"
                     checked={Boolean(settings.roundWhole)}
                     onCheckedChange={(checked) => updateSettings({ roundWhole: checked })}
+                  />
+                </div>
+                <Separator />
+
+                {/* Tactile Audio Feedback (Rule a11y-toggle-setting) */}
+                <div className="flex items-center justify-between py-2">
+                  <div className="space-y-0.5 pr-4">
+                    <Label
+                      htmlFor="switch-sound-feedback"
+                      className="text-sm font-medium text-foreground cursor-pointer"
+                    >
+                      Tactile Audio Feedback
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Play a subtle, mechanical stationery click when converting prices and a gentle tone on connection errors.
+                    </p>
+                  </div>
+                  <Switch
+                    id="switch-sound-feedback"
+                    checked={Boolean(settings.soundFeedback)}
+                    onCheckedChange={(checked) => {
+                      updateSettings(
+                        { soundFeedback: checked },
+                        `Audio feedback ${checked ? "enabled" : "disabled"}`
+                      );
+                      if (checked) {
+                        playTactileClick();
+                      }
+                    }}
                   />
                 </div>
                 <Separator />

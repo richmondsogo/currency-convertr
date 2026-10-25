@@ -40,6 +40,7 @@ import {
   isRestrictedUrl,
 } from "./popup-errors.js";
 import { applyTheme, subscribeSystemTheme } from "../shared/theme.js";
+import { playTactileClick, playErrorChime } from "../shared/audio.js";
 
 const api = getBrowser();
 
@@ -329,10 +330,12 @@ export function PopupApp() {
             setStatusType("converted");
             const providerStr = ratesData?.provider || "ECB";
             setStatusMessage(`${count} prices converted · Rates: ${providerStr}`);
+            if (settings?.soundFeedback) playTactileClick();
           }
         } else {
           setIsPageConverted(false);
           setStatusType("error");
+          if (settings?.soundFeedback) playErrorChime();
           const errorClass = classifyConversionError({
             isRestricted: false,
             hasHostPermission: true,
@@ -347,6 +350,7 @@ export function PopupApp() {
       } catch (err) {
         setIsPageConverted(false);
         setStatusType("error");
+        if (settings?.soundFeedback) playErrorChime();
         setStatusMessage(`Error: ${err.message}`);
       } finally {
         setConverting(false);
@@ -373,17 +377,20 @@ export function PopupApp() {
         setIsPageConverted(false);
         setStatusType("ready");
         setStatusMessage("Showing original prices");
+        if (settings?.soundFeedback) playTactileClick();
       } else {
         setStatusType("error");
+        if (settings?.soundFeedback) playErrorChime();
         setStatusMessage("Could not restore original prices");
       }
     } catch (err) {
       setStatusType("error");
+      if (settings?.soundFeedback) playErrorChime();
       setStatusMessage("Error restoring prices");
     } finally {
       setConverting(false);
     }
-  }, [currentTab]);
+  }, [currentTab, settings]);
 
   const handleConvertToggle = () => {
     if (isPageConverted) {
@@ -521,7 +528,7 @@ export function PopupApp() {
           onClick={openOptionsPage}
           title="Settings & Options"
           aria-label="Open settings"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-md"
+          className="hit-target-44 h-7 w-7 text-muted-foreground hover:text-foreground rounded-md"
         >
           <SettingsIcon className="h-4 w-4" aria-hidden="true" />
         </Button>
@@ -575,6 +582,7 @@ export function PopupApp() {
                 ariaLabel="Select target currency for this page"
                 align="end"
                 disabled={isRestricted}
+                onPrefetch={loadRates}
                 className="w-full h-8 font-mono text-xs"
                 placeholder="Search code or name..."
               />
@@ -594,6 +602,8 @@ export function PopupApp() {
                   key={code}
                   type="button"
                   onClick={() => handlePageTargetCurrencyChange(code)}
+                  onPointerEnter={loadRates}
+                  onFocus={loadRates}
                   disabled={isRestricted}
                   aria-pressed={isSelected}
                   className={`h-6 w-full px-1 text-xs font-mono rounded-md flex items-center justify-center transition-[background-color,color,box-shadow,transform] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background motion-safe:active:scale-[0.98] ${
@@ -618,7 +628,7 @@ export function PopupApp() {
           className={`w-full h-10 text-sm font-medium transition-[background-color,transform,box-shadow] motion-safe:active:scale-[0.98] ${
             isPageConverted
               ? "bg-secondary text-foreground hover:bg-secondary/80 ring-1 ring-inset ring-border"
-              : "bg-primary text-primary-foreground hover:bg-primary/90"
+              : "bg-primary text-primary-foreground shadow-pine-button hover:bg-primary/90"
           }`}
         >
           {converting

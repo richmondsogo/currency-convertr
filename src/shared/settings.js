@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS = {
   showInPageBar: true,
   autoConvertAll: false,
   theme: 'system', // 'system' | 'light' | 'dark'
+  soundFeedback: false, // Rule a11y-toggle-setting: opt-in tactile audio
   perSite: {} // { [hostname]: { mode?: 'ask'|'always'|'never', assumedCurrency: string|null } }
 };
 
