@@ -2,7 +2,7 @@
 
 > **Status**: COMPLETED  
 > **Branch**: `step/13-ui-interaction-and-crypto-fixes`  
-> **Parent**: `step/12-production-design-overhaul` (commit `49bbbec`)  
+> **Parent**: `main` (commit `6100742`)  
 > **Approved Plan**: `crypto_and_ui_interaction_fixes_plan.md`  
 > **Standards Reference**: Paper & Pine Design System (`DESIGN.md`), Absolute Zero `innerHTML` Rule (`AGENTS.md`), Mozilla Add-on Review Policies & MV3 Compliance.
 
