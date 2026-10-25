@@ -27,19 +27,19 @@ Convert every price on any webpage in place into your preferred currency with li
 ```text
 "Google Translate for prices" — Convert every price on any webpage into your chosen currency, in place, with live exchange rates and one-click restoration of original prices.
 
-Currency Convertr transforms international online shopping, travel bookings, and global price comparisons. With a single click or keyboard shortcut, every price on the page is seamlessly replaced with your target currency. A clean, non-intrusive Translate-style bar floats at the top, allowing you to switch currencies or restore original prices anytime.
+Currency Convertr simplifies international shopping, travel bookings, and global price comparisons. With a single click or keyboard shortcut, prices on any page are converted directly in place into your preferred currency. A discreet floating Dynamic Island pill lets you switch currencies or restore original prices at any time.
 
 KEY CAPABILITIES
 
-• In-Page Price Conversion: Converts prices directly within the webpage layout without breaking design or causing visual jumping.
+• In-Page Price Conversion: Converts prices directly within the webpage layout without breaking design or shifting elements.
 • Reversible at Any Time: Click "Show original" to restore the webpage to its exact original state.
-• Modern Translate-Style Bar: A non-intrusive floating bar lets you change target currencies or dismiss the widget for that browsing session.
+• Dynamic Island Status Pill: A clean floating capsule lets you toggle conversion, switch target currencies, or dismiss the widget.
 • Price Hover Tooltips: Hover over any converted price to inspect the original amount, source currency, and the exact exchange rate used.
 • Three Display Modes: Choose between "Replace" (clean in-place conversion), "Append" ($20.00 ≈ ₦30,512), or "Replace + Highlight".
 • Split-Price Recognition: Accurately identifies complex e-commerce layouts (such as Amazon-style split whole and fraction spans, superscript cents, and multi-element prices).
 • 170+ Supported Currencies: Converts major world currencies (USD, EUR, GBP, JPY, CAD, AUD, INR) alongside regional emerging currencies (NGN, GHS, KES, ZAR, BRL, and more) and popular cryptocurrencies.
-• Context Menu & Selection: Highlight any specific price, right-click, and convert it instantly via a desktop alert.
-• Dynamic Content & SPAs: Seamlessly converts new items loaded via infinite scrolling or client-side navigation.
+• Context Menu & Selection: Highlight any specific price, right-click, and convert it instantly via a desktop notification.
+• Dynamic Content & SPAs: Converts new items loaded via infinite scrolling or client-side navigation.
 • Automated Site Rules: Configure specific websites to auto-convert prices upon page load.
 
 PRIVACY & SECURITY GUARANTEES

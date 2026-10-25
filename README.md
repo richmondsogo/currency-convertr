@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Chromium%20%7C%20Firefox-lightgrey.svg)](#cross-browser-compatibility)
 [![Tests](https://img.shields.io/badge/Tests-120%20Unit%20%7C%2015%20E2E%20Passing-brightgreen.svg)](#testing--verification)
 
-> **"Google Translate for prices"** (v2.0.0) — An intelligent, cross-browser extension that instantly converts every price on any webpage into your preferred currency in place, with a non-intrusive Dynamic Island floating bar and one-click restoration of original prices.
+> **"Google Translate for prices"** (v2.0.0) — A privacy-first browser extension that converts prices on international web pages into your preferred currency in place, with a floating status pill and instant restoration of original prices.
 
 ---
 
@@ -59,7 +59,7 @@ Highlight any specific price string, right-click, and convert it instantly via a
   - Secondary: Fawaz Ahmed Currency API via jsDelivr CDN.
   - Tertiary: Fawaz Ahmed Currency API via Cloudflare Pages.
   - Transparent cross-rates calculated through EUR with a 6-hour cache, stale-while-revalidate, in-flight deduplication, and offline fallback.
-- **Zero Runtime Dependencies in Core Engine**: In-page scanner, detector, background service worker, and Shadow DOM pill are built entirely in vanilla JavaScript with zero framework overhead. Extension pages (options, popup) use locally bundled React and shadcn/ui components with 100% local bundling (zero remote code, zero CDN calls).
+- **Zero Runtime Dependencies in Core Engine**: The in-page DOM scanner, background service worker, and Shadow DOM Dynamic Island pill are built entirely in vanilla JavaScript with zero framework overhead. Extension surfaces (Options and Popup) use locally bundled React and shadcn/ui components with 100% local bundling (zero remote scripts, zero CDN calls).
 
 ---
 
@@ -120,7 +120,7 @@ Currency Convertr requests the following permissions in `manifest.json`:
 | `activeTab` | API | Grants temporary access to the active tab to execute in-page conversion on user demand. |
 | `scripting` | API | Executes content script injection into active tabs upon conversion request. |
 | `tabs` | API | Queries active tab properties (URL, domain) to verify restricted schemes and determine whether automated site rules apply to the active page. |
-| `<all_urls>` | Host Permission | Required for the extension's core functionality to detect, scan, and convert currency prices across global e-commerce and retail websites, and to fetch public ECB reference rates. |
+| `<all_urls>` | Host Permission | Required to scan and convert currency prices across international shopping websites, and fetch public ECB reference rates. |
 
 ---
 
@@ -182,7 +182,7 @@ npm run lint:firefox
 ## Privacy Policy Summary
 
 - **Local-Only Processing**: All webpage text inspection, candidate price detection, and DOM scanning occur strictly on your device inside volatile memory. Nothing about your browsing history, page contents, or URLs is ever recorded, transmitted, or shared.
-- **Detector Script Privacy Guarantee**: The lightweight static detector reads text nodes locally in the active tab solely to count potential price patterns. It transmits zero data over the network and never logs page content.
+- **On-Demand Execution**: Content scripts are injected only on user demand or for sites you explicitly set to "Always convert". No scripts passively monitor your browsing on unconfigured sites.
 - **Zero Telemetry**: No analytics beacons, no crash tracking SDKs, no advertising libraries, and no user profiling.
 - **Anonymous Rate Requests**: Foreign exchange rate queries request public rate tables (base EUR) and never transmit user-specific data.
 

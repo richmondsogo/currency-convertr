@@ -8,6 +8,33 @@ export const TIER2_URL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api
 export const TIER3_URL = 'https://latest.currency-api.pages.dev/v1/currencies/eur.json';
 
 /**
+ * Standard fallback rates (EUR base) used when all network tiers and cache are unavailable.
+ */
+export const DEFAULT_FALLBACK_RATES = {
+  EUR: 1.0,
+  USD: 1.08,
+  GBP: 0.85,
+  JPY: 165.0,
+  CAD: 1.48,
+  AUD: 1.65,
+  CHF: 0.94,
+  CNY: 7.85,
+  INR: 90.0,
+  NGN: 1750.0,
+  BRL: 5.95,
+  ZAR: 19.5
+};
+
+export function getOfflineFallbackData() {
+  return {
+    rates: { ...DEFAULT_FALLBACK_RATES },
+    date: new Date().toISOString().split('T')[0],
+    provider: 'Offline Fallback',
+    isStale: true
+  };
+}
+
+/**
  * Calculates the cross-exchange rate between two currencies using a EUR-base rate table.
  * formula: rate(from -> to) = r[to] / r[from]
  */

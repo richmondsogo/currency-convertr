@@ -20,10 +20,10 @@ All conversion requests feed into a single, unified conversion pipeline in the b
    - Features an instant numeric scratchpad calculator, a "Convert this page" action, and an "Always convert on this site" toggle.
    - Allows users to configure target currency, display mode, and inspect rates metadata.
 
-3. **Automatic Offer (New in v2.1.0)**:
-   - On the first visit to a site where `mode === 'ask'` (the default for all unconfigured sites), a lightweight detector runs locally after the page settles.
-   - If the dry-run scan detects prices (`count >= MIN_PRICES`), the Dynamic Island pill appears with an offer: `"Convert to USD?"` with `[Convert]` and `[Not now]`.
-   - If the user accepts, the page converts immediately and the pill presents a one-time follow-up: `"Always convert on <host>?"` with `[Always]` and `[Just this time]`.
+3. **Configured Auto-Convert (`mode: 'always'`)**:
+   - For sites configured to "Always convert", the background worker automatically injects the conversion engine when the tab finishes loading (`tabs.onUpdated`).
+   - The Dynamic Island pill appears confirming the conversion with one-click restoration.
+   - *(Note: Static `detector.js` dry-run offers for unconfigured `ask` sites are specified in ADR 0012/0013 for the upcoming v2.1.0 release).*
 
 ---
 
@@ -33,17 +33,17 @@ All conversion requests feed into a single, unified conversion pipeline in the b
 ┌────────────────────────────────────────────────────────────────────────┐
 │                          Web Browser Tab                               │
 │                                                                        │
-│  ┌─────────────────────────┐          ┌─────────────────────────────┐  │
-│  │   detector.js (Static)  │          │   content.js (Full Engine)  │  │
-│  │  - Runs at idle         │          │  - Injected on demand       │  │
-│  │  - Reads site mode      │          │  - PageScanner (DOM mutator)│  │
-│  │  - countCandidates()    │          │  - InPageUI (Shadow DOM)    │  │
-│  │  - Dry-run only         │          │  - Dynamic Island Pill      │  │
-│  └───────────┬─────────────┘          └──────────────┬──────────────┘  │
-└──────────────┼───────────────────────────────────────┼─────────────────┘
-               │                                       │                  
-               │ Typed Messages via messaging.js       │                  
-               ▼                                       ▼                  
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                    content.js (Full Engine)                      │  │
+│  │  - Injected on user action or auto-convert site rules            │  │
+│  │  - PageScanner (two-phase DOM walker & split-price reassembly)   │  │
+│  │  - InPageUI (Theme-aware Dynamic Island pill inside Shadow DOM)  │  │
+│  │  - Byte-for-byte revert fidelity via WeakMap                     │  │
+│  └──────────────────────────────────┬───────────────────────────────┘  │
+└─────────────────────────────────────┼──────────────────────────────────┘
+                                      │
+                                      │ Typed Messages via messaging.js
+                                      ▼                  
 ┌────────────────────────────────────────────────────────────────────────┐
 │                     Background Service Worker                          │
 │                         (background.js)                                │

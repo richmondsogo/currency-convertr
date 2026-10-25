@@ -1,5 +1,5 @@
 // src/background.js
-import { RatesEngine, calculateRate, convertAmount } from './shared/rates.js';
+import { RatesEngine, calculateRate, convertAmount, getOfflineFallbackData } from './shared/rates.js';
 import { SettingsManager, DEFAULT_SETTINGS, getSiteMode, shouldAutoConvertPage, normalizeHost } from './shared/settings.js';
 import { formatCurrency } from './shared/format.js';
 import { detectCurrency, extractAmount } from './shared/parser.js';
@@ -104,11 +104,7 @@ async function convertPageOnTab(tabId, targetCurrency = null) {
     ratesData = await ratesEngine.getRates();
   } catch (err) {
     console.warn('[CurrencyConverter] getRates failed, using fallback:', err.message);
-    ratesData = {
-      rates: { USD: 1, EUR: 0.92, GBP: 0.79, NGN: 1500, CAD: 1.35, AUD: 1.5, JPY: 150 },
-      date: new Date().toISOString().split('T')[0],
-      provider: 'Offline Fallback'
-    };
+    ratesData = getOfflineFallbackData();
   }
 
   const response = await sendTabMessage(tabId, {
