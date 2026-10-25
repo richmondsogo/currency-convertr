@@ -53,7 +53,7 @@ Currency Convertr operates under a strict Zero-Telemetry policy:
 SUPPORT & ISSUES
 
 Report bugs or submit currency requests on GitHub:
-https://github.com/richmondsogo/currency-converter-v2/issues
+https://github.com/richmondsogo/currency-convertr/issues
 ```
 
 #### Category
@@ -85,15 +85,13 @@ English
 
 | Permission | Scope | Justification |
 |---|---|---|
-| `activeTab` | API | Enables the user to initiate in-page price conversion on the active tab via the toolbar button or keyboard shortcut without requiring permanent broad host permissions. |
-| `scripting` | API | Injects the price-scanning content script into the active tab upon user activation, and dynamically registers content scripts for sites the user configured for auto-conversion. |
+| `tabs` | API | Queries active tab properties (URL, domain) to verify restricted schemes and determine whether automated site rules apply to the active page. |
+| `activeTab` | API | Enables the user to initiate in-page price conversion on the active tab via the toolbar button or keyboard shortcut (`Alt+Shift+C`). |
+| `scripting` | API | Programmatically injects the price-scanning content script and Dynamic Island floating bar into active tabs upon conversion request. |
 | `storage` | API | Persists user preferences (target currency, display mode, pinned currencies, per-site rules) and caches exchange rates locally (`chrome.storage.local`). |
-| `contextMenus` | API | Registers the "Convert currency" context-menu items when text is selected on a page. |
+| `contextMenus` | API | Registers the "Convert prices on this page" and "Convert selected price" items in the browser context menu. |
 | `notifications` | API | Displays desktop notifications when converting selected text via the right-click menu. |
-| `optional_host_permissions` (`["<all_urls>"]`) | Host | Requested only after an explicit user interaction when the user chooses to enable "Always convert on this site" or "Auto-convert on all sites". Never granted by default. |
-| `https://api.frankfurter.dev/*` | Host | Queries European Central Bank reference exchange rates for major fiat currencies. |
-| `https://cdn.jsdelivr.net/*` | Host | Queries open exchange rate tables for 170+ regional currencies via CDN. |
-| `https://latest.currency-api.pages.dev/*` | Host | Serves as tertiary fallback provider if primary and CDN rate hosts are unreachable. |
+| `<all_urls>` | Host Permission | Required for the extension's core functionality to detect, scan, and convert currency prices across global e-commerce and retail websites, and to fetch public ECB reference rates. |
 
 ---
 
