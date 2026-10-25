@@ -51,6 +51,7 @@ export function CurrencyCombobox({
   className,
   popoverClassName,
   scrollHeight = "h-56",
+  onPrefetch,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -106,8 +107,10 @@ export function CurrencyCombobox({
           aria-expanded={open}
           aria-label={ariaLabel}
           disabled={disabled}
+          onPointerEnter={onPrefetch}
+          onFocus={onPrefetch}
           className={cn(
-            "justify-between font-mono text-xs h-9 bg-background hover:bg-secondary/60 border-border/80 transition-[background-color,border-color,box-shadow] motion-safe:active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+            "justify-between font-mono text-xs h-9 bg-background hover:bg-secondary/60 border-border/80 transition-[background-color,border-color,box-shadow,transform] motion-safe:active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
             className
           )}
         >
@@ -117,11 +120,17 @@ export function CurrencyCombobox({
           >
             {displayLabel}
           </span>
-          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50 text-muted-foreground" aria-hidden="true" />
+          <ChevronsUpDown
+            className={cn(
+              "ml-2 h-3.5 w-3.5 shrink-0 opacity-50 text-muted-foreground transition-transform duration-150 ease-out",
+              open && "rotate-180"
+            )}
+            aria-hidden="true"
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={cn("w-[280px] p-0 border-border/80 shadow-lg bg-popover", popoverClassName)}
+        className={cn("w-[280px] p-0 border-border/80 shadow-pine-popover rounded-lg bg-popover", popoverClassName)}
         align={align}
       >
         <Command shouldFilter={false}>

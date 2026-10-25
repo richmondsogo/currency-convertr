@@ -163,8 +163,78 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum", "zero";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* Precision Typography Utilities (Rule type-) */
+.tnum, [data-tabular-nums] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "zero", "cv02", "cv03", "cv04", "cv11";
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* Fitts' Law Accessible Hit Slop Expansion (Rule pseudo-hit-target-expansion) */
+.hit-target-44 {
+  position: relative;
+}
+.hit-target-44::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+/* Paper & Pine multi-layer ambient ink shadows (Rule visual-no-pure-black-shadows) */
+.shadow-pine-button {
+  box-shadow:
+    0 1px 2px rgba(25, 24, 21, 0.05),
+    0 3px 8px -1px rgba(25, 24, 21, 0.08);
+}
+
+.dark .shadow-pine-button {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 3px 8px -1px rgba(0, 0, 0, 0.5);
+}
+
+.shadow-pine-card {
+  box-shadow:
+    0 1px 2px rgba(25, 24, 21, 0.04),
+    0 4px 12px -2px rgba(25, 24, 21, 0.06);
+}
+
+.dark .shadow-pine-card {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 4px 12px -2px rgba(0, 0, 0, 0.45);
+}
+
+.shadow-pine-popover {
+  box-shadow:
+    0 2px 4px rgba(25, 24, 21, 0.04),
+    0 8px 20px -2px rgba(25, 24, 21, 0.08),
+    0 20px 32px -4px rgba(25, 24, 21, 0.06);
+}
+
+.dark .shadow-pine-popover {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 20px -2px rgba(0, 0, 0, 0.55),
+    0 20px 32px -4px rgba(0, 0, 0, 0.65);
 }
