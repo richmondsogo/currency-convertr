@@ -25,7 +25,7 @@ Specifically, Currency Convertr:
 
 When you interact with Currency Convertr—either via the toolbar popup, keyboard shortcut (`Alt+Shift+C`), right-click context menu, or on sites where automatic detection or conversion is active:
 
-1. **Local DOM Analysis & Candidate Detection**: The extension inspects text nodes and pricing elements on the active webpage **entirely locally within your browser tab**. A lightweight detector script executes at document idle in the top frame to evaluate whether candidate prices exist on the page; this scan is purely read-only and runs in volatile memory.
+1. **Local DOM Analysis**: The extension inspects text nodes and pricing elements on the active webpage **entirely locally within your browser tab**. Price scanning executes on the top frame only when triggered (via popup, keyboard shortcut, context menu, or for sites configured to "Always convert"); all scanning is purely local and runs in volatile memory.
 2. **Volatile Memory**: Currency symbols, numbers, and ISO codes are processed purely in ephemeral JavaScript memory.
 3. **No External Transmission**: Page text, product descriptions, pricing history, and DOM structures **never leave your device**. No text or URL data is ever transmitted over the network or logged remotely.
 4. **Reversible Operation**: If you select "Show original", original text is restored directly from client-side memory without contacting any remote service.
@@ -38,7 +38,7 @@ Currency Convertr uses local browser storage APIs (`chrome.storage.local` and `c
 - Your preferred target currency and display mode (Replace, Append, or Replace + Highlight).
 - Pinned currencies for the toolbar and context menu.
 - Custom per-site rules you have configured (mode: 'ask' | 'always' | 'never').
-- Temporary session suppression (`chrome.storage.session`) when you dismiss an offer with "Not now" (automatically cleared when the browser closes).
+- Temporary session suppression (`chrome.storage.session`) when you dismiss an in-page pill (automatically cleared when the browser closes).
 - Cached foreign exchange rate tables (to reduce unnecessary network calls).
 
 This data is stored strictly in your local browser profile. It is **never** synchronized with any cloud server or transmitted off your machine.
@@ -81,10 +81,9 @@ Currency Convertr requests only permissions strictly necessary to execute its de
 | `notifications` | API | Renders system desktop notifications for context-menu selection conversions. |
 | `storage` | API | Saves preferences and caches exchange rates locally on your computer (`chrome.storage.local` and `chrome.storage.session`). |
 | `activeTab` | API | Grants temporary access to the active tab to execute in-page price conversion when triggered by user action. |
-| `scripting` | API | Executes content script injection into active tabs on user demand. |
+| `scripting` | API | Executes content script injection into active tabs on user demand or for approved automated sites. |
 | `tabs` | API | Verifies active tab URL and restricted page schemes to route in-page status and prevent script injection on browser system pages. |
-| `<all_urls>` | Host Permission | Allows the in-page price conversion engine and lightweight detector script to detect and convert prices across international shopping websites. |
-| `http://*/*`, `https://*/*` | Host Permission | Declared for legacy host matching; redundant with `<all_urls>` and scheduled for cleanup. |
+| `<all_urls>` | Host Permission | Allows the in-page price conversion engine to scan and convert prices across international shopping websites when triggered by the user or an automated site rule, and to fetch public ECB reference rates. |
 
 The extension **never** accesses or requests invasive permissions such as `webRequest`, `cookies`, or `history`. The `tabs` permission is strictly used to identify tab status and URL schemes, and browsing activity is never recorded.
 

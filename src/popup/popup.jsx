@@ -490,12 +490,12 @@ export function PopupApp() {
 
   // Rates text display
   const ratesFreshnessText = useMemo(() => {
-    if (ratesLoading) return "Rates: Updating...";
-    if (ratesError || !ratesInfo) return "Rates: Unavailable";
+    if (ratesLoading) return "Updating...";
+    if (ratesError || !ratesInfo) return "Rates unavailable";
     const provider = ratesInfo.provider || "ECB";
     const date = ratesInfo.date || "Today";
     const staleNotice = ratesInfo.isStale ? " (cached)" : "";
-    return `Rates: ${provider}, ${date}${staleNotice}`;
+    return `${provider} · ${date}${staleNotice}`;
   }, [ratesLoading, ratesError, ratesInfo]);
 
   return (
@@ -581,11 +581,11 @@ export function PopupApp() {
             </div>
           </div>
 
-          {/* Pinned currencies: borderless chips, selected state is a quiet raised fill */}
+          {/* Pinned currencies: balanced 4-column grid, borderless chips */}
           <div
             role="group"
             aria-label="Pinned currencies"
-            className="flex flex-wrap items-center gap-1"
+            className="grid grid-cols-4 gap-1.5"
           >
             {pinnedCodes.map((code) => {
               const isSelected = pageTargetCurrency === code;
@@ -596,7 +596,7 @@ export function PopupApp() {
                   onClick={() => handlePageTargetCurrencyChange(code)}
                   disabled={isRestricted}
                   aria-pressed={isSelected}
-                  className={`h-6 px-2.5 text-xs font-mono rounded-md transition-[background-color,color,box-shadow,transform] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background motion-safe:active:scale-[0.98] ${
+                  className={`h-6 w-full px-1 text-xs font-mono rounded-md flex items-center justify-center transition-[background-color,color,box-shadow,transform] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background motion-safe:active:scale-[0.98] ${
                     isSelected
                       ? "bg-background text-foreground font-medium shadow-xs border border-border/80"
                       : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
@@ -714,7 +714,7 @@ export function PopupApp() {
             <div className="flex items-center justify-between gap-2">
               <label
                 htmlFor="site-currency-override"
-                className="text-sm text-foreground"
+                className="text-sm text-foreground truncate min-w-0"
               >
                 Prices on this site are in
               </label>
@@ -728,7 +728,7 @@ export function PopupApp() {
                 triggerText={assumedCurrency || "Auto-detect"}
                 ariaLabel={`Prices on ${hostname || "this site"} are in`}
                 align="end"
-                className="h-9 px-2.5 text-xs font-mono w-[132px]"
+                className="h-9 px-2.5 text-xs font-mono w-[140px] shrink-0"
                 popoverClassName="w-[280px]"
                 scrollHeight="h-44"
                 placeholder="Assumed currency..."

@@ -57,7 +57,7 @@ currency-convertr/
 ├── scripts/                    # Build utilities, data generators, and test verification scripts
 │   ├── generate-currencies.js  # Node.js generator for currencies-data.js
 │   ├── generate_clean_assets.js
-│   ├── generate_v2_screenshots.js
+│   ├── capture-production-screenshots.js
 │   └── verify_*.js             # Automated visual verification scripts
 │
 ├── src/                        # Primary extension source code (pure ESM)
