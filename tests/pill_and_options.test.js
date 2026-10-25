@@ -288,3 +288,41 @@ test('ui: Dynamic Island micro-popover menu and auto-collapse behavior', async (
   ui.unmount();
 });
 
+test('ui: InPageUI respects showCrypto option and dynamic updates', () => {
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+  const doc = dom.window.document;
+
+  // 1. Initialized with showCrypto = false
+  const ui = new InPageUI({
+    doc,
+    targetCurrency: 'USD',
+    isConverted: true,
+    showCrypto: false
+  });
+  ui.mount();
+
+  const selectBtn = ui.barElement.querySelector('.cc-select');
+  selectBtn.click(); // opens popover
+
+  let items = Array.from(ui.popoverMenu.querySelectorAll('.cc-popover-item'));
+  let btcItem = items.find(el => el.getAttribute('data-currency-code') === 'BTC');
+  assert.equal(btcItem, undefined, 'BTC must NOT be present when showCrypto is false');
+
+  // 2. Dynamic update to showCrypto = true
+  ui.update({ showCrypto: true });
+  items = Array.from(ui.popoverMenu.querySelectorAll('.cc-popover-item'));
+  btcItem = items.find(el => el.getAttribute('data-currency-code') === 'BTC');
+  assert.ok(btcItem, 'BTC must be present after updating showCrypto to true');
+
+  const ethItem = items.find(el => el.getAttribute('data-currency-code') === 'ETH');
+  assert.ok(ethItem, 'ETH must be present after updating showCrypto to true');
+
+  // 3. Dynamic update back to showCrypto = false
+  ui.update({ showCrypto: false });
+  items = Array.from(ui.popoverMenu.querySelectorAll('.cc-popover-item'));
+  btcItem = items.find(el => el.getAttribute('data-currency-code') === 'BTC');
+  assert.equal(btcItem, undefined, 'BTC must be removed after updating showCrypto to false');
+
+  ui.unmount();
+});
+

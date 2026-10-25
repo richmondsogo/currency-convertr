@@ -549,7 +549,7 @@ export function PopupApp() {
               Convert this page to
             </h2>
             {pageTargetCurrency === settings?.targetCurrency && (
-              <Badge variant="secondary" className="text-[11px] font-mono font-medium text-muted-foreground bg-secondary/80 px-1.5 py-0 rounded border border-border/40">
+              <Badge variant="secondary" className="text-xs font-mono font-medium text-muted-foreground bg-secondary/80 px-1.5 py-0 rounded border border-border/40">
                 Default
               </Badge>
             )}
@@ -596,10 +596,10 @@ export function PopupApp() {
                   onClick={() => handlePageTargetCurrencyChange(code)}
                   disabled={isRestricted}
                   aria-pressed={isSelected}
-                  className={`h-6 px-2 text-xs font-mono rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  className={`h-6 px-2.5 text-xs font-mono rounded-md transition-[background-color,color,box-shadow,transform] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background motion-safe:active:scale-[0.98] ${
                     isSelected
-                      ? "bg-secondary text-foreground font-medium shadow-xs"
-                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                      ? "bg-background text-foreground font-medium shadow-xs border border-border/80"
+                      : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
                   }`}
                 >
                   {code}
@@ -729,7 +729,7 @@ export function PopupApp() {
                 ariaLabel={`Prices on ${hostname || "this site"} are in`}
                 align="end"
                 className="h-9 px-2.5 text-xs font-mono w-[132px]"
-                popoverClassName="w-56"
+                popoverClassName="w-[280px]"
                 scrollHeight="h-44"
                 placeholder="Assumed currency..."
               />
