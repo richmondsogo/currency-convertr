@@ -26,8 +26,8 @@ export function SiteModeControl({
   id,
 }) {
   const itemClasses = size === "sm"
-    ? "text-xs h-7 px-2.5 rounded-md font-medium text-muted-foreground hover:text-foreground data-[state=on]:text-foreground data-[state=on]:bg-background data-[state=on]:shadow-xs transition-[background-color,color,box-shadow,transform] motion-safe:active:scale-[0.98]"
-    : "text-xs h-8 px-3 rounded-md font-medium text-muted-foreground hover:text-foreground data-[state=on]:text-foreground data-[state=on]:bg-background data-[state=on]:shadow-xs transition-[background-color,color,box-shadow,transform] motion-safe:active:scale-[0.98]";
+    ? "text-xs h-7 px-2.5 rounded-md font-medium text-muted-foreground hover:bg-background/50 hover:text-foreground data-[state=on]:text-foreground data-[state=on]:bg-background data-[state=on]:shadow-xs data-[state=on]:border data-[state=on]:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background transition-[background-color,color,box-shadow,transform] motion-safe:active:scale-[0.98]"
+    : "text-xs h-8 px-3 rounded-md font-medium text-muted-foreground hover:bg-background/50 hover:text-foreground data-[state=on]:text-foreground data-[state=on]:bg-background data-[state=on]:shadow-xs data-[state=on]:border data-[state=on]:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background transition-[background-color,color,box-shadow,transform] motion-safe:active:scale-[0.98]";
 
   const askLabel = domain ? `Ask on ${domain}` : "Mode Ask";
   const alwaysLabel = domain ? `Always convert ${domain}` : "Mode Always";

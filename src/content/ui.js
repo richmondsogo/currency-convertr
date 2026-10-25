@@ -651,6 +651,7 @@ export class InPageUI {
     rateDate = null,
     provider = null,
     theme = 'system',
+    showCrypto = false,
     autoCollapse = false,
     onShowOriginal = null,
     onConvert = null,
@@ -665,6 +666,7 @@ export class InPageUI {
     this.rateDate = rateDate;
     this.provider = provider;
     this.theme = theme;
+    this.showCrypto = Boolean(showCrypto);
     this.autoCollapse = autoCollapse;
     this.onShowOriginal = onShowOriginal;
     this.onConvert = onConvert;
@@ -994,7 +996,7 @@ export class InPageUI {
 
     const renderItems = (filter = '') => {
       list.replaceChildren();
-      const currencies = getAllCurrencies({ includeCrypto: false });
+      const currencies = getAllCurrencies({ includeCrypto: Boolean(this.showCrypto) });
       const cleanFilter = filter.trim().toLowerCase();
       const filtered = cleanFilter
         ? currencies.filter(c => c.code.toLowerCase().includes(cleanFilter) || c.name.toLowerCase().includes(cleanFilter))
@@ -1337,7 +1339,7 @@ export class InPageUI {
     }
   }
 
-  update({ isConverted, targetCurrency, sourceCurrency, count, rateDate, provider, theme } = {}) {
+  update({ isConverted, targetCurrency, sourceCurrency, count, rateDate, provider, theme, showCrypto } = {}) {
     if (isConverted !== undefined) this.isConverted = Boolean(isConverted);
     if (targetCurrency !== undefined) this.targetCurrency = targetCurrency;
     if (sourceCurrency !== undefined) this.sourceCurrency = sourceCurrency;
@@ -1347,6 +1349,12 @@ export class InPageUI {
     if (theme !== undefined) {
       this.theme = theme;
       this._applyTheme(theme);
+    }
+    if (showCrypto !== undefined && Boolean(showCrypto) !== Boolean(this.showCrypto)) {
+      this.showCrypto = Boolean(showCrypto);
+      if (this._renderPopoverItems) {
+        this._renderPopoverItems(this.popoverSearch?.value || '');
+      }
     }
 
     if (!this.barElement) return;

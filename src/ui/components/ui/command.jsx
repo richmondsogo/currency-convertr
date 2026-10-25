@@ -32,27 +32,44 @@ const CommandDialog = ({
   )
 }
 
+// Hook getElementById for cmdk internal lookup so custom element IDs do not cause focus loss
+if (typeof document !== 'undefined' && !document.__cmdk_id_hooked) {
+  document.__cmdk_id_hooked = true;
+  const origGetElementById = document.getElementById.bind(document);
+  document.getElementById = function(elementId) {
+    const el = origGetElementById(elementId);
+    if (el) return el;
+    try {
+      return document.querySelector(`[data-cmdk-id="${elementId}"]`);
+    } catch {
+      return null;
+    }
+  };
+}
+
 const CommandInput = React.forwardRef(({ className, id, ...props }, ref) => {
   const innerRef = React.useRef(null);
-  React.useEffect(() => {
-    if (id && innerRef.current) {
-      innerRef.current.id = id;
-    }
-  }, [id]);
 
   return (
     <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
-      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-muted-foreground" />
       <CommandPrimitive.Input
         ref={(el) => {
           innerRef.current = el;
+          if (el) {
+            const originalId = el.getAttribute("data-cmdk-id") || el.id;
+            if (originalId && originalId !== id) {
+              el.setAttribute("data-cmdk-id", originalId);
+            }
+            if (id) {
+              el.id = id;
+            }
+          }
           if (typeof ref === "function") ref(el);
           else if (ref) ref.current = el;
-          if (el && id) el.id = id;
         }}
-        id={id}
         className={cn(
-          "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-10 w-full rounded-md bg-transparent py-2.5 text-xs outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}

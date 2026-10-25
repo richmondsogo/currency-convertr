@@ -11,7 +11,6 @@ import {
   CommandList,
 } from "@/ui/components/ui/command";
 import { Button } from "@/ui/components/ui/button";
-import { ScrollArea } from "@/ui/components/ui/scroll-area";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { getCurrencyMeta, getAllCurrencies } from "../../shared/currencies.js";
 import { cn } from "@/ui/lib/utils";
@@ -122,10 +121,10 @@ export function CurrencyCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={cn("w-[260px] p-0 border-border/80 shadow-lg bg-popover", popoverClassName)}
+        className={cn("w-[280px] p-0 border-border/80 shadow-lg bg-popover", popoverClassName)}
         align={align}
       >
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             id={searchInputId}
             placeholder={placeholder}
@@ -134,7 +133,7 @@ export function CurrencyCombobox({
             className="search-input h-9 text-xs"
             aria-label={placeholder}
           />
-          <CommandList>
+          <CommandList className={cn("overflow-y-auto overflow-x-hidden p-1", scrollHeight)}>
             <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">
               No currency found.
             </CommandEmpty>
@@ -146,11 +145,11 @@ export function CurrencyCombobox({
                   value={`auto ${autoDetectLabel}`}
                   onSelect={() => handleSelect(null)}
                   onClick={() => handleSelect(null)}
-                  className="option-item text-xs py-1.5 cursor-pointer font-sans"
+                  className="option-item text-xs py-1.5 px-2 cursor-pointer font-sans"
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-3.5 w-3.5 shrink-0 text-accent",
+                      "mr-1.5 h-3.5 w-3.5 shrink-0 text-accent",
                       !value ? "opacity-100" : "opacity-0"
                     )}
                     aria-hidden="true"
@@ -161,38 +160,36 @@ export function CurrencyCombobox({
             )}
 
             <CommandGroup heading="Currencies">
-              <ScrollArea className={scrollHeight}>
-                {filteredCurrencies.map((c) => {
-                  const isSelected = value === c.code;
-                  return (
-                    <CommandItem
-                      key={c.code}
-                      data-currency-code={c.code}
-                      value={`${c.code} ${c.name} ${c.symbol}`}
-                      onSelect={() => handleSelect(c.code)}
-                      onClick={() => handleSelect(c.code)}
-                      className="option-item text-xs font-mono flex items-center justify-between py-1.5 cursor-pointer"
-                    >
-                      <div className="flex items-center min-w-0">
-                        <Check
-                          className={cn(
-                            "mr-2 h-3.5 w-3.5 shrink-0 text-accent",
-                            isSelected ? "opacity-100" : "opacity-0"
-                          )}
-                          aria-hidden="true"
-                        />
-                        <span className="font-medium text-foreground">{c.code}</span>
-                        <span className="ml-2 font-sans text-xs text-muted-foreground truncate max-w-[120px]">
-                          {c.name}
-                        </span>
-                      </div>
-                      <span className="font-mono text-xs text-muted-foreground ml-auto pl-2 shrink-0">
-                        {c.symbol}
+              {filteredCurrencies.map((c) => {
+                const isSelected = value === c.code;
+                return (
+                  <CommandItem
+                    key={c.code}
+                    data-currency-code={c.code}
+                    value={`${c.code} ${c.name} ${c.symbol}`}
+                    onSelect={() => handleSelect(c.code)}
+                    onClick={() => handleSelect(c.code)}
+                    className="option-item text-xs font-mono flex items-center justify-between py-1.5 px-2 cursor-pointer"
+                  >
+                    <div className="flex items-center min-w-0 pr-2">
+                      <Check
+                        className={cn(
+                          "mr-1.5 h-3.5 w-3.5 shrink-0 text-accent",
+                          isSelected ? "opacity-100" : "opacity-0"
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span className="font-semibold text-foreground shrink-0">{c.code}</span>
+                      <span className="ml-2 font-sans text-xs text-muted-foreground truncate">
+                        {c.name}
                       </span>
-                    </CommandItem>
-                  );
-                })}
-              </ScrollArea>
+                    </div>
+                    <span className="font-mono text-xs text-muted-foreground shrink-0 ml-auto pl-2 text-right">
+                      {c.symbol}
+                    </span>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

@@ -523,7 +523,7 @@ export function OptionsApp() {
                 type="single"
                 value={settings.theme}
                 onValueChange={(val) => val && updateSettings({ theme: val })}
-                className="bg-secondary p-0.5 rounded-lg border border-border"
+                className="bg-secondary/70 p-0.5 rounded-lg border border-border/80 gap-0.5"
                 aria-label="Theme quick switcher"
               >
                 <ToggleGroupItem value="light" aria-label="Light theme" className="h-7 px-2 text-xs">
@@ -729,13 +729,13 @@ export function OptionsApp() {
                         `Default site behavior set to ${isAlways ? "Always" : "Ask"}`
                       );
                     }}
-                    className="bg-secondary p-0.5 rounded-lg border border-border shrink-0"
+                    className="bg-secondary/70 p-0.5 rounded-lg border border-border/80 shrink-0 gap-0.5"
                     aria-label="Default site behavior"
                   >
-                    <ToggleGroupItem value="ask" aria-label="Default Ask" className="h-8 px-3 text-xs">
+                    <ToggleGroupItem value="ask" aria-label="Default Ask" className="h-8 px-3.5 text-xs">
                       Ask
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="always" aria-label="Default Always" className="h-8 px-3 text-xs">
+                    <ToggleGroupItem value="always" aria-label="Default Always" className="h-8 px-3.5 text-xs">
                       Always
                     </ToggleGroupItem>
                   </ToggleGroup>
@@ -1151,7 +1151,7 @@ export function OptionsApp() {
                     type="single"
                     value={settings.theme}
                     onValueChange={(val) => val && updateSettings({ theme: val })}
-                    className="bg-secondary p-0.5 rounded-lg border border-border shrink-0"
+                    className="bg-secondary/70 p-0.5 rounded-lg border border-border/80 shrink-0 gap-0.5"
                     aria-label="Theme selector"
                   >
                     <ToggleGroupItem value="light" aria-label="Light theme" className="h-8 px-3 text-xs">

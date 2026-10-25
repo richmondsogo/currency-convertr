@@ -15,10 +15,11 @@ let globalRates = null;
 let rateDate = null;
 let rateProvider = null;
 let currentSettings = null;
-// Theme setting ('system' | 'light' | 'dark') for the in-page pill. Loaded on demand so the
+// Theme and crypto settings for the in-page pill. Loaded on demand so the
 // first paint already matches the user's choice (currentSettings is only populated by live
 // storage changes and must not silently alter conversion fallbacks).
 let pillThemeSetting = null;
+let pillCryptoSetting = null;
 
 const api = getBrowser();
 
@@ -28,22 +29,33 @@ function resolvePillTheme() {
   return currentSettings?.theme || pillThemeSetting || 'system';
 }
 
+function resolvePillCrypto() {
+  if (typeof currentSettings?.showCrypto === 'boolean') return currentSettings.showCrypto;
+  if (typeof pillCryptoSetting === 'boolean') return pillCryptoSetting;
+  return false;
+}
+
 /**
- * Fetches the saved theme once. Never throws and never blocks conversion for long:
- * on failure or timeout the pill falls back to following the OS ('system').
+ * Fetches the saved settings (theme, showCrypto) once. Never throws and never blocks conversion for long:
+ * on failure or timeout the pill falls back to defaults.
  */
-async function ensurePillTheme() {
-  if (currentSettings?.theme || pillThemeSetting) return;
+async function ensurePillSettings() {
+  if ((currentSettings?.theme || pillThemeSetting) && (currentSettings?.showCrypto !== undefined || pillCryptoSetting !== null)) return;
   try {
     const settings = await Promise.race([
       sendMessage({ type: MSG.GET_SETTINGS }),
       new Promise((resolve) => setTimeout(() => resolve(null), THEME_LOAD_TIMEOUT_MS))
     ]);
-    if (settings && typeof settings.theme === 'string') {
-      pillThemeSetting = settings.theme;
+    if (settings) {
+      if (typeof settings.theme === 'string') {
+        pillThemeSetting = settings.theme;
+      }
+      if (typeof settings.showCrypto === 'boolean') {
+        pillCryptoSetting = settings.showCrypto;
+      }
     }
   } catch {
-    // Non-fatal: keep following the system theme.
+    // Non-fatal: keep following default settings.
   }
 }
 
@@ -177,7 +189,8 @@ async function performConversion(options = {}) {
   if (shouldShowPill) {
     // Resolve the saved theme before the first paint (no-op once known). The create check below
     // runs synchronously after this await, so concurrent conversions cannot mount two pills.
-    if (!currentUI) await ensurePillTheme();
+    if (!currentUI) await ensurePillSettings();
+    const effectiveCrypto = resolvePillCrypto();
     if (!currentUI) {
       currentUI = new InPageUI({
         doc: document,
@@ -188,6 +201,7 @@ async function performConversion(options = {}) {
         rateDate,
         provider: rateProvider,
         theme: resolvePillTheme(),
+        showCrypto: effectiveCrypto,
         autoCollapse: true,
         onShowOriginal: () => {
           performRevert();
@@ -208,7 +222,8 @@ async function performConversion(options = {}) {
         count: convertedCount,
         rateDate,
         provider: rateProvider,
-        theme: resolvePillTheme()
+        theme: resolvePillTheme(),
+        showCrypto: effectiveCrypto
       });
     }
 
@@ -250,7 +265,7 @@ function performRevert() {
 }
 
 function initContentScript() {
-  void ensurePillTheme();
+  void ensurePillSettings();
   // Tooltip event delegation
   document.addEventListener('mouseover', (e) => {
     if (!isConverted || !currentScanner || !currentUI) return;
@@ -321,9 +336,17 @@ function initContentScript() {
     api.storage.onChanged.addListener((changes, area) => {
       if ((area === 'local' || area === 'sync') && changes[SETTINGS_STORAGE_KEY]) {
         currentSettings = changes[SETTINGS_STORAGE_KEY].newValue || currentSettings;
-        if (currentUI && currentSettings && currentSettings.theme) {
-          pillThemeSetting = currentSettings.theme;
-          currentUI.update({ theme: currentSettings.theme });
+        if (currentUI && currentSettings) {
+          if (currentSettings.theme) {
+            pillThemeSetting = currentSettings.theme;
+          }
+          if (typeof currentSettings.showCrypto === 'boolean') {
+            pillCryptoSetting = currentSettings.showCrypto;
+          }
+          currentUI.update({
+            theme: currentSettings.theme,
+            showCrypto: currentSettings.showCrypto
+          });
         }
       }
     });
