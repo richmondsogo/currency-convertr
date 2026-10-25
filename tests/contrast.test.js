@@ -77,3 +77,46 @@ test('Contrast calculation fails if contrast drops below 4.5:1', () => {
   const poorContrastRatio = getContrastRatio('#888888', '#F7F5F0');
   assert.ok(poorContrastRatio < 4.5, `Expected < 4.5:1, got ${poorContrastRatio.toFixed(2)}:1`);
 });
+
+test('CurrencyCombobox selection states satisfy WCAG AA >= 4.5:1 (prevents 1.1:1 flaw)', () => {
+  // Verifies fix where active row uses raised paper surface (--secondary) instead of saturated green
+  const lightPaperBg = '#EBE7DE'; // Light --secondary raised paper
+  const lightInkText = '#191815'; // Light text-foreground
+  const lightMutedText = '#67635A'; // Light text-muted-foreground
+
+  const darkPaperBg = '#1F1E1B'; // Dark --secondary raised paper
+  const darkInkText = '#ECE9E2'; // Dark text-foreground
+  const darkMutedText = '#9B968B'; // Dark text-muted-foreground
+
+  // Light Mode active combobox item
+  const lightInkRatio = getContrastRatio(lightInkText, lightPaperBg);
+  const lightMutedRatio = getContrastRatio(lightMutedText, lightPaperBg);
+  assert.ok(lightInkRatio >= 7.0, `Light ink on secondary must meet AAA (>= 7:1), got ${lightInkRatio.toFixed(2)}:1`);
+  assert.ok(lightMutedRatio >= 4.5, `Light muted on secondary must meet AA (>= 4.5:1), got ${lightMutedRatio.toFixed(2)}:1`);
+
+  // Dark Mode active combobox item
+  const darkInkRatio = getContrastRatio(darkInkText, darkPaperBg);
+  const darkMutedRatio = getContrastRatio(darkMutedText, darkPaperBg);
+  assert.ok(darkInkRatio >= 7.0, `Dark ink on secondary must meet AAA (>= 7:1), got ${darkInkRatio.toFixed(2)}:1`);
+  assert.ok(darkMutedRatio >= 4.5, `Dark muted on secondary must meet AA (>= 4.5:1), got ${darkMutedRatio.toFixed(2)}:1`);
+
+  // Regression check: verify old flawed pattern fails
+  const oldFlawedAccentBg = '#1E6B52';
+  const flawedRatio = getContrastRatio(lightMutedText, oldFlawedAccentBg);
+  assert.ok(flawedRatio < 2.0, `Expected old flawed combination to fail (< 2:1), got ${flawedRatio.toFixed(2)}:1`);
+});
+
+test('Switch control thumb and track satisfy WCAG AA / AAA contrast', () => {
+  // Light Mode: White thumb on Pine Green track
+  const lightThumb = '#FFFFFF';
+  const lightTrack = '#1E6B52';
+  const lightSwitchRatio = getContrastRatio(lightThumb, lightTrack);
+  assert.ok(lightSwitchRatio >= 4.5, `Light switch thumb on track must meet AA (>= 4.5:1), got ${lightSwitchRatio.toFixed(2)}:1`);
+
+  // Dark Mode: Deep Black thumb on Spring Mint track
+  const darkThumb = '#10100E';
+  const darkTrack = '#6FD3A6';
+  const darkSwitchRatio = getContrastRatio(darkThumb, darkTrack);
+  assert.ok(darkSwitchRatio >= 7.0, `Dark switch thumb on track must meet AAA (>= 7:1), got ${darkSwitchRatio.toFixed(2)}:1`);
+});
+

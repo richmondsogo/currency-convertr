@@ -464,7 +464,7 @@ export function OptionsApp() {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center font-sans">
         <div className="space-y-3 text-center">
-          <div className="w-8 h-8 mx-auto rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-mono font-bold text-sm animate-pulse">
+          <div className="w-7 h-7 mx-auto rounded-md bg-primary text-primary-foreground flex items-center justify-center font-mono font-medium text-xs animate-pulse">
             fx
           </div>
           <p className="text-sm text-muted-foreground">Loading preferences...</p>
@@ -479,7 +479,7 @@ export function OptionsApp() {
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center font-sans p-6">
         <div className="max-w-md w-full space-y-4 text-center">
           <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
-          <h1 className="text-xl font-bold">Failed to load preferences</h1>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">Failed to load preferences</h1>
           <p className="text-sm text-muted-foreground">{loadError}</p>
           <Button onClick={loadInitialSettings} variant="default" className="mt-2">
             Retry
@@ -504,12 +504,12 @@ export function OptionsApp() {
         <header className="border-b border-border bg-background/90 backdrop-blur sticky top-0 z-40">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <span className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-mono font-bold text-sm">
+              <span className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-mono font-medium text-xs tracking-tight">
                 fx
               </span>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-md tracking-tight">Currency Convertr</span>
+                  <span className="font-semibold text-sm tracking-tight text-foreground">Currency Convertr</span>
                   <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
                     v{typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "2.0.0"} ({typeof __BUILD_GIT_SHA__ !== "undefined" ? __BUILD_GIT_SHA__ : "dev"})
                   </span>
@@ -544,7 +544,7 @@ export function OptionsApp() {
         <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col md:flex-row gap-8">
           {/* Sidebar (~220px on desktop; horizontal scrollable nav on mobile <760px) */}
           <aside className="w-full md:w-[220px] shrink-0">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-2 hidden md:block">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-3 mb-2 hidden md:block">
               Preferences
             </div>
             <nav
@@ -562,7 +562,7 @@ export function OptionsApp() {
                     onClick={() => setCurrentSection(sec.id)}
                     className={`group flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
                       isActive
-                        ? "bg-secondary text-foreground font-semibold"
+                        ? "bg-secondary text-foreground font-medium"
                         : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground font-normal"
                     }`}
                   >
@@ -584,7 +584,7 @@ export function OptionsApp() {
           {/* Settings Column (~640px, NO CARDS) */}
           <main className="flex-1 max-w-[640px] space-y-6">
             <div className="space-y-1">
-              <h1 className="text-xl font-bold tracking-tight text-foreground">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 {activeSection.title}
               </h1>
               <p className="text-sm text-muted-foreground">{activeSection.description}</p>
@@ -812,7 +812,7 @@ export function OptionsApp() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-sm font-semibold text-foreground">Pinned Currencies</h2>
+                      <h2 className="text-sm font-medium text-foreground">Pinned Currencies</h2>
                       <p className="text-xs text-muted-foreground">
                         Pinned currencies appear in the right-click menu and top of the quick converter.
                       </p>
@@ -842,7 +842,7 @@ export function OptionsApp() {
                             key={code}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary border border-border text-xs text-foreground"
                           >
-                            <span className="font-mono font-semibold">{code}</span>
+                            <span className="font-mono font-medium">{code}</span>
                             {meta?.symbol && (
                               <span className="text-muted-foreground">({meta.symbol})</span>
                             )}
@@ -922,12 +922,12 @@ export function OptionsApp() {
                                     className="text-xs font-mono flex items-center justify-between py-1.5 cursor-pointer"
                                   >
                                     <div className="flex items-center min-w-0">
-                                      <span className="font-semibold">{c.code}</span>
+                                      <span className="font-medium text-foreground">{c.code}</span>
                                       <span className="ml-2 font-sans text-muted-foreground truncate max-w-[120px]">
                                         {c.name}
                                       </span>
                                     </div>
-                                    <span className="font-sans font-bold ml-1">{c.symbol}</span>
+                                    <span className="font-mono text-xs text-muted-foreground ml-auto pl-2">{c.symbol}</span>
                                   </CommandItem>
                                 ))}
                               </ScrollArea>
@@ -1024,7 +1024,7 @@ export function OptionsApp() {
                 {/* Filter and Rules Count */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center space-x-2">
-                    <h2 className="text-sm font-semibold text-foreground">Configured Rules</h2>
+                    <h2 className="text-sm font-medium text-foreground">Configured Rules</h2>
                     <Badge variant="secondary" className="font-mono text-xs">
                       {perSiteEntries.length} {perSiteEntries.length === 1 ? "rule" : "rules"}
                     </Badge>
@@ -1313,11 +1313,11 @@ export function OptionsApp() {
             {currentSection === "about" && (
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <h2 className="text-sm font-semibold text-foreground">Extension Version</h2>
+                  <h2 className="text-sm font-medium text-foreground">Extension Version</h2>
                   <div className="p-3 bg-secondary/30 rounded-lg border border-border space-y-1 font-mono text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Version:</span>
-                      <span className="font-semibold text-foreground">
+                      <span className="font-medium text-foreground">
                         {typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "2.0.0"}
                       </span>
                     </div>
@@ -1339,7 +1339,7 @@ export function OptionsApp() {
 
                 {/* Exchange Rates Metadata */}
                 <div className="space-y-3">
-                  <h2 className="text-sm font-semibold text-foreground">Exchange Rate Providers</h2>
+                  <h2 className="text-sm font-medium text-foreground">Exchange Rate Providers</h2>
                   <p className="text-xs text-muted-foreground">
                     Exchange rates are cached locally for 6 hours using a 3-tier resilient fallback architecture.
                   </p>
@@ -1374,7 +1374,7 @@ export function OptionsApp() {
                       Toggle currency conversion on the active browser tab.
                     </p>
                   </div>
-                  <kbd className="px-2.5 py-1 text-xs font-mono font-semibold bg-secondary border border-border rounded shadow-sm text-foreground">
+                  <kbd className="px-2 py-0.5 text-xs font-mono font-medium bg-secondary border border-border rounded shadow-xs text-foreground">
                     {shortcutKey}
                   </kbd>
                 </div>
@@ -1382,7 +1382,7 @@ export function OptionsApp() {
 
                 {/* Links */}
                 <div className="space-y-3">
-                  <h2 className="text-sm font-semibold text-foreground">Privacy & Source Code</h2>
+                  <h2 className="text-sm font-medium text-foreground">Privacy & Source Code</h2>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <a
                       href="https://github.com/richmondsogo/currency-converter-v2/blob/main/PRIVACY_POLICY.md"

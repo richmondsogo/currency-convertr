@@ -506,7 +506,7 @@ export function Gallery() {
                                       {c.name}
                                     </span>
                                   </div>
-                                  <span className="font-sans font-bold ml-1">{c.symbol}</span>
+                                  <span className="font-mono text-xs text-muted-foreground ml-auto pl-2">{c.symbol}</span>
                                 </CommandItem>
                               ))}
                             </ScrollArea>

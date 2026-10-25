@@ -297,9 +297,7 @@ export async function buildExtension() {
       "tabs"
     ],
     host_permissions: [
-      "<all_urls>",
-      "http://*/*",
-      "https://*/*"
+      "<all_urls>"
     ],
     icons: {
       "16": "icons/icon16.png",
