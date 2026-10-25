@@ -3,6 +3,10 @@
 > **Status**: COMPLETED  
 > **Branch**: `step/12-production-design-overhaul`  
 > **Parent**: `main` (commit `33add5d`)  
+> **Pull Request**: [#18](https://github.com/richmondsogo/currency-convertr/pull/18)  
+> **First Commit**: `49bbbecde021f10e2e2c7c5d4340f561f120cc9d`  
+> **Last Commit**: `49bbbecde021f10e2e2c7c5d4340f561f120cc9d`  
+> **Merge Commit**: `9755c4d514bda47b3de3c041ed282a518c09aeb5`  
 > **Approved Plan**: `production_polish_and_design_overhaul.md`  
 > **Standards Reference**: Emil Kowalski (`emil-design-eng`, `review-animations`), Apple WWDC Design (`apple-design`), Adversarial UI (`break-ui`), Paper & Pine Design System (`DESIGN.md`)
 
