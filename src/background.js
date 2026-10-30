@@ -12,6 +12,8 @@ const settingsManager = new SettingsManager();
 
 // Cache of active tab status: tabId -> { isConverted, count, targetCurrency }
 const tabStatusMap = new Map();
+// Session-scoped set of hostnames where the user dismissed the Ask Mode offer prompt
+const dismissedOfferHosts = new Set();
 
 // -----------------------------------------------------------------------------
 // 1. NOTIFICATIONS
@@ -143,6 +145,28 @@ async function convertPageOnTab(tabId, targetCurrency = null, tabUrl = null) {
       targetCurrency: target
     });
   }
+}
+
+async function offerPageOnTab(tabId, targetCurrency = null, tabUrl = null) {
+  const injected = await ensureInjected(tabId);
+  if (!injected) return;
+
+  const settings = await settingsManager.getSettings();
+  const target = targetCurrency || settings.targetCurrency || 'USD';
+  const host = extractNormalizedHost(tabUrl);
+  const siteOverride = host && settings.perSite && settings.perSite[host]?.assumedCurrency
+    ? settings.perSite[host].assumedCurrency
+    : undefined;
+
+  await sendTabMessage(tabId, {
+    type: MSG.OFFER_PAGE,
+    payload: {
+      targetCurrency: target,
+      showInPageBar: settings.showInPageBar,
+      siteOverride,
+      ambiguousDollarSetting: settings.ambiguousDollar || 'USD'
+    }
+  });
 }
 
 async function revertPageOnTab(tabId) {
@@ -297,6 +321,33 @@ if (api && api.runtime && api.runtime.onMessage) {
       return true;
     }
 
+    // Ask-mode offer prompt: user clicked [Always on this site]
+    if (message.type === MSG.ACCEPT_ALWAYS_SITE) {
+      const host = normalizeHost(message.payload?.hostname || extractNormalizedHost(sender?.tab?.url));
+      if (!host) {
+        sendResponse({ success: false, error: 'Invalid hostname' });
+        return false;
+      }
+      settingsManager.setSiteMode(host, 'always')
+        .then(updated => {
+          dismissedOfferHosts.delete(host);
+          buildMenus();
+          sendResponse({ success: true, settings: updated });
+        })
+        .catch(err => sendResponse({ success: false, error: err.message }));
+      return true;
+    }
+
+    // Ask-mode offer prompt: user clicked [×] to dismiss offer for this session
+    if (message.type === MSG.DISMISS_OFFER) {
+      const host = normalizeHost(message.payload?.hostname || extractNormalizedHost(sender?.tab?.url));
+      if (host) {
+        dismissedOfferHosts.add(host);
+      }
+      sendResponse({ success: true });
+      return false;
+    }
+
     // Page status reported by content script
     if (message.type === MSG.PAGE_STATUS) {
       if (sender && sender.tab && sender.tab.id) {
@@ -308,7 +359,7 @@ if (api && api.runtime && api.runtime.onMessage) {
   });
 }
 
-// tabs.onUpdated auto-convert trigger for approved origins
+// tabs.onUpdated auto-convert ('always') & Ask-Mode offer prompt ('ask')
 if (api && api.tabs && api.tabs.onUpdated) {
   api.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete') {
@@ -317,14 +368,20 @@ if (api && api.tabs && api.tabs.onUpdated) {
         try {
           const url = new URL(rawUrl);
           const settings = await settingsManager.getSettings();
-          const shouldAutoConvert = shouldAutoConvertPage(settings, url.hostname);
+          const { mode } = getSiteMode(settings, url.hostname);
+          const target = settings.targetCurrency || 'USD';
+          const normHost = normalizeHost(url.hostname);
 
-          if (shouldAutoConvert) {
-            const target = settings.targetCurrency || 'USD';
+          const rule = settings.perSite && normHost ? settings.perSite[normHost] : null;
+          const explicitMode = rule?.mode;
+
+          if (mode === 'always') {
             await convertPageOnTab(tabId, target, rawUrl);
+          } else if (explicitMode === 'ask' && normHost && !dismissedOfferHosts.has(normHost) && settings.showInPageBar !== false) {
+            await offerPageOnTab(tabId, target, rawUrl);
           }
         } catch (err) {
-          console.error('[CC Background] Auto-convert failed on tab:', tabId, err);
+          console.error('[CC Background] Auto-convert/offer failed on tab:', tabId, err);
         }
       }
     }

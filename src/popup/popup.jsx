@@ -11,16 +11,14 @@ import { CanjiLockup } from "@/ui/components/CanjiLogo";
 import { getEffectiveSiteCaption } from "@/ui/lib/site-rules";
 import {
   Clock,
-  Settings as SettingsIcon,
-  AlertCircle,
+  GearSix,
+  WarningCircle,
   ArrowRight,
-  Calculator,
-  Copy,
-  Check,
-} from "lucide-react";
-import { getAllCurrencies, getCurrencyMeta } from "../shared/currencies.js";
-import { calculateRate } from "../shared/rates.js";
-import { formatCurrency } from "../shared/format.js";
+  Sparkle,
+  ArrowCounterClockwise,
+  GlobeHemisphereWest,
+} from "@phosphor-icons/react";
+import { getAllCurrencies } from "../shared/currencies.js";
 import { MSG } from "../shared/messaging.js";
 import {
   sendMessage,
@@ -67,11 +65,6 @@ export function PopupApp() {
   const [pageTargetCurrency, setPageTargetCurrency] = useState("USD");
   const [isPageConverted, setIsPageConverted] = useState(false);
   const [converting, setConverting] = useState(false);
-
-  // Quick Scratchpad state
-  const [showScratchpad, setShowScratchpad] = useState(false);
-  const [scratchAmount, setScratchAmount] = useState("100");
-  const [scratchCopied, setScratchCopied] = useState(false);
 
   // Live status
   const [statusMessage, setStatusMessage] = useState("Ready to convert");
@@ -502,37 +495,6 @@ export function PopupApp() {
     return getEffectiveSiteCaption(rule, autoConvertAll);
   }, [settings, hostname]);
 
-  // Scratchpad source currency (uses assumedCurrency if set, else EUR when target is USD, else USD)
-  const scratchSourceCurrency = useMemo(() => {
-    if (assumedCurrency && assumedCurrency !== pageTargetCurrency) {
-      return assumedCurrency;
-    }
-    return pageTargetCurrency === "USD" ? "EUR" : "USD";
-  }, [assumedCurrency, pageTargetCurrency]);
-
-  const scratchConvertedText = useMemo(() => {
-    const num = parseFloat(scratchAmount);
-    if (!Number.isFinite(num) || num < 0) return "—";
-    if (!ratesInfo?.rates) return "...";
-    try {
-      const rate = calculateRate(scratchSourceCurrency, pageTargetCurrency, ratesInfo.rates);
-      return formatCurrency(num * rate, pageTargetCurrency, {
-        roundWhole: Boolean(settings?.roundWhole),
-      });
-    } catch {
-      return "—";
-    }
-  }, [scratchAmount, scratchSourceCurrency, pageTargetCurrency, ratesInfo, settings?.roundWhole]);
-
-  const handleCopyScratch = async () => {
-    if (!scratchConvertedText || scratchConvertedText === "—") return;
-    try {
-      await navigator.clipboard.writeText(scratchConvertedText);
-      setScratchCopied(true);
-      setTimeout(() => setScratchCopied(false), 1200);
-    } catch {}
-  };
-
   // Rates text display
   const ratesFreshnessText = useMemo(() => {
     if (ratesLoading) return "Updating...";
@@ -545,86 +507,22 @@ export function PopupApp() {
 
   return (
     <div className="w-[360px] max-h-[580px] overflow-y-auto bg-background text-foreground font-sans p-4 flex flex-col gap-3.5 select-none selection:bg-accent/20">
-      {/* 1. Header with Canji Lockup + Quick Scratchpad Toggle + Settings */}
+      {/* 1. Header with Canji Lockup + Settings */}
       <header className="flex items-center justify-between">
-        <CanjiLockup cut="small" symbolSize={20} wordmarkClassName="text-base" />
+        <CanjiLockup cut="small" size={20} wordmarkClassName="text-[15px]" />
 
-        <div className="flex items-center gap-1">
-          <Button
-            id="btn-toggle-scratchpad"
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowScratchpad((v) => !v)}
-            title="Quick price scratchpad"
-            aria-label="Toggle quick price calculator"
-            aria-expanded={showScratchpad}
-            className={`hit-target-44 h-7 w-7 rounded-md transition-colors ${
-              showScratchpad
-                ? "bg-secondary text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Calculator className="h-4 w-4" aria-hidden="true" />
-          </Button>
-          <Button
-            id="btn-open-options"
-            variant="ghost"
-            size="icon"
-            onClick={openOptionsPage}
-            title="Settings & Options"
-            aria-label="Open settings"
-            className="hit-target-44 h-7 w-7 text-muted-foreground hover:text-foreground rounded-md"
-          >
-            <SettingsIcon className="h-4 w-4" aria-hidden="true" />
-          </Button>
-        </div>
-      </header>
-
-      {/* Optional Collapsible Quick Scratchpad Calculator */}
-      {showScratchpad && (
-        <section
-          aria-label="Quick price scratchpad"
-          className="rounded-lg bg-secondary/60 border border-border/80 p-2.5 space-y-2"
+        <Button
+          id="btn-open-options"
+          variant="ghost"
+          size="icon"
+          onClick={openOptionsPage}
+          title="Settings & Options"
+          aria-label="Open settings"
+          className="hit-target-44 h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-secondary/70 rounded-md transition-colors"
         >
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Quick Scratchpad</span>
-            <span className="font-mono">
-              {scratchSourceCurrency} → {pageTargetCurrency}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-background border border-border rounded-md px-2.5 h-8 flex-1 min-w-0">
-              <span className="font-mono text-xs text-muted-foreground shrink-0">
-                {getCurrencyMeta(scratchSourceCurrency)?.symbol || scratchSourceCurrency}
-              </span>
-              <input
-                id="scratchpad-amount-input"
-                type="number"
-                min="0"
-                step="any"
-                value={scratchAmount}
-                onChange={(e) => setScratchAmount(e.target.value)}
-                aria-label={`Amount in ${scratchSourceCurrency}`}
-                className="w-full bg-transparent font-mono text-xs font-medium text-foreground focus:outline-none"
-              />
-            </div>
-            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-            <button
-              type="button"
-              onClick={handleCopyScratch}
-              title="Click to copy converted amount"
-              className="h-8 px-2.5 rounded-md bg-accent/15 text-foreground border border-accent/30 font-mono text-xs font-medium inline-flex items-center gap-1.5 hover:bg-accent/25 transition-colors shrink-0"
-            >
-              <span>{scratchCopied ? "Copied" : scratchConvertedText}</span>
-              {scratchCopied ? (
-                <Check className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
-              ) : (
-                <Copy className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-              )}
-            </button>
-          </div>
-        </section>
-      )}
+          <GearSix weight="regular" className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      </header>
 
       {/* 2. Unsupported / Restricted Notice */}
       {isRestricted && (
@@ -632,7 +530,7 @@ export function PopupApp() {
           id="unsupported-notice"
           className="rounded-lg bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-3 py-2 text-xs text-foreground flex items-start gap-2.5"
         >
-          <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" aria-hidden="true" />
+          <WarningCircle weight="fill" className="h-4 w-4 text-warning shrink-0 mt-0.5" aria-hidden="true" />
           <span className="leading-relaxed">
             Price conversion is unavailable on browser system or restricted extension pages.
           </span>
@@ -640,7 +538,7 @@ export function PopupApp() {
       )}
 
       {/* 3. Main Controls */}
-      <main id="main-controls" className="flex flex-col gap-3">
+      <main id="main-controls" className="flex flex-col gap-3.5">
         {/* Converter / Target Currency */}
         <section className="space-y-2" aria-labelledby="target-heading">
           <div className="flex items-center justify-between">
@@ -648,7 +546,7 @@ export function PopupApp() {
               Convert this page to
             </h2>
             {pageTargetCurrency === settings?.targetCurrency && (
-              <Badge variant="secondary" className="text-xs font-mono font-medium text-muted-foreground bg-secondary/80 px-1.5 py-0 rounded border border-border/40">
+              <Badge variant="secondary" className="text-xs font-mono font-medium text-muted-foreground bg-secondary/80 px-1.5 py-0 rounded border border-border/50">
                 Default
               </Badge>
             )}
@@ -657,12 +555,12 @@ export function PopupApp() {
           <div className="flex items-center gap-2">
             <span
               id="from-display"
-              className="shrink-0 text-xs text-muted-foreground"
+              className="shrink-0 text-xs text-muted-foreground font-medium"
             >
               {assumedCurrency ? `Site (${assumedCurrency})` : "Auto-detect"}
             </span>
 
-            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+            <ArrowRight weight="bold" className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
 
             <div className="flex-1 min-w-0">
               <CurrencyCombobox
@@ -681,11 +579,11 @@ export function PopupApp() {
             </div>
           </div>
 
-          {/* Pinned currencies: balanced 4-column grid */}
+          {/* Pinned currencies: balanced 4-column grid with tactile micro-elevation */}
           <div
             role="group"
             aria-label="Pinned currencies"
-            className="grid grid-cols-4 gap-1.5"
+            className="grid grid-cols-4 gap-1.5 pt-0.5"
           >
             {pinnedCodes.map((code) => {
               const isSelected = pageTargetCurrency === code;
@@ -698,10 +596,10 @@ export function PopupApp() {
                   onFocus={loadRates}
                   disabled={isRestricted}
                   aria-pressed={isSelected}
-                  className={`h-6 w-full px-1 text-xs font-mono rounded-md flex items-center justify-center transition-[background-color,color,box-shadow,transform] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background motion-safe:active:scale-[0.98] ${
+                  className={`h-7 w-full px-1 text-xs font-mono rounded-md flex items-center justify-center transition-[background-color,color,box-shadow,border-color,transform] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background motion-safe:active:scale-[0.98] ${
                     isSelected
-                      ? "bg-background text-foreground font-medium shadow-xs border border-border/80"
-                      : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+                      ? "bg-background text-foreground font-semibold shadow-xs border border-border/90"
+                      : "bg-secondary/45 text-muted-foreground border border-transparent hover:bg-secondary/80 hover:text-foreground"
                   }`}
                 >
                   {code}
@@ -717,19 +615,28 @@ export function PopupApp() {
           type="button"
           disabled={converting || isRestricted}
           onClick={handleConvertToggle}
-          className={`w-full h-10 text-sm font-medium transition-[background-color,transform,box-shadow] motion-safe:active:scale-[0.98] ${
+          className={`w-full h-10 text-sm font-medium gap-2 transition-[background-color,transform,box-shadow] motion-safe:active:scale-[0.98] ${
             isPageConverted
               ? "bg-secondary text-foreground hover:bg-secondary/80 ring-1 ring-inset ring-border"
               : "bg-primary text-primary-foreground shadow-pine-button hover:bg-primary/90"
           }`}
         >
-          {converting
-            ? "Converting..."
-            : isRestricted
-            ? "Unavailable on this page"
-            : isPageConverted
-            ? "Show original"
-            : "Convert this page"}
+          {!converting && !isRestricted && (
+            isPageConverted ? (
+              <ArrowCounterClockwise weight="bold" className="h-4 w-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <Sparkle weight="fill" className="h-4 w-4 shrink-0" aria-hidden="true" />
+            )
+          )}
+          <span>
+            {converting
+              ? "Converting..."
+              : isRestricted
+              ? "Unavailable on this page"
+              : isPageConverted
+              ? "Show original"
+              : "Convert this page"}
+          </span>
         </Button>
 
         {/* 5. Live Status */}
@@ -764,20 +671,21 @@ export function PopupApp() {
           </span>
         </div>
 
-        {/* 6. Unified "This site" control group */}
+        {/* 6. Unified "This site" control group — flat hairline layout per DESIGN.md */}
         {!isRestricted && (
           <section
-            className="rounded-lg bg-secondary/35 border border-border/70 p-3 space-y-2.5"
+            className="border-t border-border/70 pt-3 space-y-2.5"
             aria-labelledby="site-heading"
           >
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-baseline gap-2 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <GlobeHemisphereWest weight="duotone" className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
                 <h2 id="site-heading" className="text-xs font-medium text-muted-foreground shrink-0">
                   This site
                 </h2>
                 <span
                   id="current-domain-label"
-                  className="font-mono text-xs font-medium text-foreground truncate max-w-[185px]"
+                  className="font-mono text-xs font-medium text-foreground truncate max-w-[180px]"
                   title={hostname || "Current site"}
                 >
                   {hostname || "Current site"}
@@ -814,7 +722,7 @@ export function PopupApp() {
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/60">
+            <div className="flex items-center justify-between gap-2 pt-1">
               <label
                 htmlFor="site-currency-override"
                 className="text-xs text-foreground truncate min-w-0"
@@ -845,7 +753,7 @@ export function PopupApp() {
       <Separator />
       <footer className="flex items-center justify-between gap-3 text-xs text-muted-foreground -mt-1">
         <div id="rates-meta" className="flex items-center gap-1.5 min-w-0">
-          <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <Clock weight="regular" className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span id="rates-freshness-text" className="truncate tabular-nums">
             {ratesFreshnessText}
           </span>
@@ -863,7 +771,7 @@ export function PopupApp() {
 
         <div className="flex items-center gap-3 shrink-0">
           {shortcutKey && (
-            <kbd className="px-1.5 py-0.5 text-xs font-mono rounded bg-secondary text-muted-foreground">
+            <kbd className="px-1.5 py-0.5 text-xs font-mono rounded bg-secondary border border-border/60 text-muted-foreground">
               {shortcutKey}
             </kbd>
           )}

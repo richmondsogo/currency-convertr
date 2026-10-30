@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
-import { Search } from "lucide-react"
+import { MagnifyingGlass } from "@phosphor-icons/react"
 
 import { cn } from "@/ui/lib/utils"
 import { Dialog, DialogContent } from "@/ui/components/ui/dialog"
@@ -52,7 +52,7 @@ const CommandInput = React.forwardRef(({ className, id, ...props }, ref) => {
 
   return (
     <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
-      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-muted-foreground" />
+      <MagnifyingGlass className="mr-2 h-4 w-4 shrink-0 opacity-60 text-muted-foreground" weight="bold" aria-hidden="true" />
       <CommandPrimitive.Input
         ref={(el) => {
           innerRef.current = el;

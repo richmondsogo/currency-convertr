@@ -11,29 +11,12 @@ import {
   CommandList,
 } from "@/ui/components/ui/command";
 import { Button } from "@/ui/components/ui/button";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, CaretUpDown } from "@phosphor-icons/react";
 import { getCurrencyMeta, getAllCurrencies } from "../../shared/currencies.js";
 import { cn } from "@/ui/lib/utils";
 
 /**
  * Accessible searchable Currency Combobox with Popover + Command.
- *
- * @param {object} props
- * @param {string|null} props.value - Selected currency code (e.g. "USD") or empty/null
- * @param {(code: string|null) => void} props.onChange - Selection handler
- * @param {Array<{code: string, name: string, symbol: string}>} [props.currencies] - Optional filtered currency list
- * @param {boolean} [props.allowAutoDetect=false] - When true, provides an "Auto-detect" item
- * @param {string} [props.autoDetectLabel="Auto-detect"] - Label for auto-detect option
- * @param {string} [props.placeholder="Search code or name..."] - Search input placeholder
- * @param {string} [props.triggerText] - Custom trigger text override
- * @param {string} [props.triggerId] - HTML id for trigger button
- * @param {string} [props.searchInputId] - HTML id for search input
- * @param {string} [props.ariaLabel="Select currency"] - Accessible label for trigger
- * @param {"start"|"end"|"center"} [props.align="start"] - Popover alignment
- * @param {boolean} [props.disabled=false] - Disabled state
- * @param {string} [props.className] - Trigger button class name
- * @param {string} [props.popoverClassName] - Popover content class name
- * @param {string} [props.scrollHeight="h-56"] - Height for scrollable item list
  */
 export function CurrencyCombobox({
   value,
@@ -110,7 +93,7 @@ export function CurrencyCombobox({
           onPointerEnter={onPrefetch}
           onFocus={onPrefetch}
           className={cn(
-            "justify-between font-mono text-xs h-9 bg-background hover:bg-secondary/60 border-border/80 transition-[background-color,border-color,box-shadow,transform] motion-safe:active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+            "justify-between font-mono text-xs h-9 bg-background hover:bg-secondary/60 border-border/80 shadow-xs transition-[background-color,border-color,box-shadow,transform] motion-safe:active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
             className
           )}
         >
@@ -120,9 +103,10 @@ export function CurrencyCombobox({
           >
             {displayLabel}
           </span>
-          <ChevronsUpDown
+          <CaretUpDown
+            weight="bold"
             className={cn(
-              "ml-2 h-3.5 w-3.5 shrink-0 opacity-50 text-muted-foreground transition-transform duration-150 ease-out",
+              "ml-2 h-3.5 w-3.5 shrink-0 opacity-60 text-muted-foreground transition-transform duration-150 ease-out",
               open && "rotate-180"
             )}
             aria-hidden="true"
@@ -157,6 +141,7 @@ export function CurrencyCombobox({
                   className="option-item text-xs py-1.5 px-2 cursor-pointer font-sans"
                 >
                   <Check
+                    weight="bold"
                     className={cn(
                       "mr-1.5 h-3.5 w-3.5 shrink-0 text-accent",
                       !value ? "opacity-100" : "opacity-0"
@@ -182,6 +167,7 @@ export function CurrencyCombobox({
                   >
                     <div className="flex items-center min-w-0 pr-2">
                       <Check
+                        weight="bold"
                         className={cn(
                           "mr-1.5 h-3.5 w-3.5 shrink-0 text-accent",
                           isSelected ? "opacity-100" : "opacity-0"
