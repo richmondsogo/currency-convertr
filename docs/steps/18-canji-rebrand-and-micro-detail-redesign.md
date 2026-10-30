@@ -1,8 +1,9 @@
 # Step 18: Canji Rebrand & Micro-Detail Redesign
 
 **Branch**: `step/18-canji-rebrand-and-micro-detail-redesign`  
+**Pull Request**: [#24](https://github.com/richmondsogo/currency-convertr/pull/24)  
 **First Commit**: `33513c3`  
-**Last Commit**: `36e06b6`  
+**Last Commit**: `b0dfa16`  
 **Target Version**: `2.0.0`  
 **Repository Remote**: `https://github.com/richmondsogo/currency-convertr.git`  
 **Date**: 2026-10-30  
