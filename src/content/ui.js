@@ -139,7 +139,8 @@ export const INLINE_UI_CSS = `
 }
 
 /* Status dot: pine accent while converted, muted when showing originals */
-.cc-status-dot {
+.cc-status-dot,
+.cc-offer-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -948,7 +949,7 @@ export class InPageUI {
     offerRow.className = 'cc-offer-row';
 
     const offerDot = this.doc.createElement('div');
-    offerDot.className = 'cc-status-dot cc-offer-dot';
+    offerDot.className = 'cc-offer-dot';
     offerRow.appendChild(offerDot);
 
     const offerText = this.doc.createElement('span');
@@ -1011,7 +1012,6 @@ export class InPageUI {
     offerActions.appendChild(btnOfferDismiss);
 
     offerRow.appendChild(offerActions);
-    island.appendChild(offerRow);
 
     // 1. Compact Row (Always visible in converted capsule)
     const compact = this.doc.createElement('div');
@@ -1194,6 +1194,7 @@ export class InPageUI {
 
     expandable.appendChild(expandableContent);
     island.appendChild(expandable);
+    island.appendChild(offerRow);
 
     return island;
   }

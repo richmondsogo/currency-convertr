@@ -213,8 +213,8 @@ test('ui: Dynamic Island pill maintains single-capsule horizontal expansion arch
   const compact = island.querySelector('.cc-island-compact');
   const expandable = island.querySelector('.cc-island-expandable');
   assert.ok(compact, 'Must contain .cc-island-compact');
-  assert.ok(compact.querySelector('svg.cc-brand-mark'), 'Must contain Canji small-cut SVG mark in compact capsule');
-  assert.ok(ui.collapsedElement.querySelector('svg.cc-brand-mark'), 'Must contain Canji small-cut SVG mark in collapsed mini-pill');
+  assert.ok(compact.querySelector('.cc-status-dot'), 'Must contain status dot in compact capsule');
+  assert.ok(ui.collapsedElement.querySelector('.cc-status-dot'), 'Must contain status dot in collapsed mini-pill');
   assert.ok(expandable, 'Must contain .cc-island-expandable inside the single capsule');
   assert.strictEqual(expandable.parentElement, island, 'Expandable row must be a direct child of the single island capsule');
 
@@ -387,6 +387,58 @@ test('ui: Dynamic Island stays expanded (.cc-expanded) while popover menu is ope
   const subText = ui.tooltipElement.querySelector('.cc-tooltip-sub').textContent;
   assert.ok(subText.includes('0.0006061'), `Expected significant precision for sub-cent rate, got: ${subText}`);
   assert.match(INLINE_UI_CSS, /\.cc-tooltip\.flipped\s+\.cc-tooltip-caret/, 'INLINE_UI_CSS must style .cc-tooltip.flipped .cc-tooltip-caret');
+
+  ui.unmount();
+});
+
+test('ui: Dynamic Island renders Ask Mode offer prompt with interactive actions', () => {
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+  const doc = dom.window.document;
+
+  let acceptedCur = null;
+  let alwaysCur = null;
+  let offerDismissed = false;
+
+  const ui = new InPageUI({
+    doc,
+    mode: 'offer',
+    targetCurrency: 'USD',
+    sourceCurrency: 'EUR',
+    convertedCount: 6,
+    onAcceptOffer: (cur) => { acceptedCur = cur; },
+    onAlwaysOnSite: (cur) => { alwaysCur = cur; },
+    onDismissOffer: () => { offerDismissed = true; }
+  });
+  ui.mount();
+
+  const island = ui.barElement;
+  assert.ok(island.classList.contains('cc-mode-offer'), 'Must carry cc-mode-offer class');
+
+  const offerText = island.querySelector('.cc-offer-text');
+  assert.ok(offerText, 'Must render .cc-offer-text');
+  assert.equal(offerText.textContent, 'Detected 6 EUR prices · Convert to USD?');
+
+  const convertBtn = island.querySelector('.cc-offer-btn-primary');
+  assert.ok(convertBtn, 'Must render Convert button');
+  assert.equal(convertBtn.textContent, 'Convert');
+
+  const alwaysBtn = island.querySelector('.cc-offer-btn-secondary');
+  assert.ok(alwaysBtn, 'Must render Always on this site button');
+  assert.equal(alwaysBtn.textContent, 'Always on this site');
+
+  const dismissBtn = island.querySelector('.cc-offer-dismiss');
+  assert.ok(dismissBtn, 'Must render Dismiss button');
+
+  // Test action callbacks
+  convertBtn.click();
+  assert.equal(acceptedCur, 'USD', 'Convert button triggers onAcceptOffer');
+
+  alwaysBtn.click();
+  assert.equal(alwaysCur, 'USD', 'Always button triggers onAlwaysOnSite');
+
+  dismissBtn.click();
+  assert.equal(offerDismissed, true, 'Dismiss button triggers onDismissOffer');
+  assert.equal(island.style.display, 'none', 'Dismissing offer hides island');
 
   ui.unmount();
 });

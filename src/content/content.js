@@ -16,6 +16,8 @@ let rateDate = null;
 let rateProvider = null;
 let currentSettings = null;
 let cachedSettings = null;
+let lastTooltipHideTime = 0;
+
 // Theme and crypto settings for the in-page pill. Loaded on demand so the
 // first paint already matches the user's choice (currentSettings is only populated by live
 // storage changes and must not silently alter conversion fallbacks).
@@ -188,7 +190,7 @@ async function performConversion(options = {}) {
       provider: rateProvider,
       onConvertedCountChange: (count) => {
         if (currentUI) {
-          currentUI.update({ count, isConverted: true });
+          currentUI.update({ mode: 'converted', count, isConverted: true });
         }
         notifyBackgroundOfStatus();
       }
@@ -219,9 +221,6 @@ async function performConversion(options = {}) {
     if (!currentUI) await ensurePillSettings();
     const effectiveCrypto = resolvePillCrypto();
     if (!currentUI) {
-      const host = (typeof window !== 'undefined' && window.location?.hostname)
-        ? window.location.hostname.replace(/^www\./, '').toLowerCase()
-        : '';
       currentUI = new InPageUI({
         doc: document,
         mode: 'converted',
@@ -247,14 +246,14 @@ async function performConversion(options = {}) {
           performConversion({ targetCurrency: cur, manual: true });
         },
         onAlwaysOnSite: (cur) => {
-          if (host) {
-            sendMessage({ type: MSG.ACCEPT_ALWAYS_SITE, payload: { hostname: host } }).catch(() => {});
+          if (hostname) {
+            sendMessage({ type: MSG.ACCEPT_ALWAYS_SITE, payload: { hostname } }).catch(() => {});
           }
           performConversion({ targetCurrency: cur, manual: true });
         },
         onDismissOffer: () => {
-          if (host) {
-            sendMessage({ type: MSG.DISMISS_OFFER, payload: { hostname: host } }).catch(() => {});
+          if (hostname) {
+            sendMessage({ type: MSG.DISMISS_OFFER, payload: { hostname } }).catch(() => {});
           }
         }
       });
@@ -304,15 +303,120 @@ function performRevert() {
   }
   isConverted = false;
   if (currentUI) {
-    currentUI.update({ isConverted: false, count: 0 });
+    currentUI.update({ mode: 'converted', isConverted: false, count: 0 });
   }
   notifyBackgroundOfStatus();
   return { success: true, count: 0 };
 }
 
+async function performOffer(options = {}) {
+  if (isConverted) {
+    return { success: true, offered: false, alreadyConverted: true };
+  }
+  if (!currentSettings && !cachedSettings) {
+    await ensurePillSettings();
+  }
+  const settingsSource = currentSettings || cachedSettings;
+  const showInPageBar = options.showInPageBar !== undefined
+    ? options.showInPageBar
+    : (settingsSource?.showInPageBar !== false);
+  if (!showInPageBar) {
+    return { success: true, offered: false, count: 0 };
+  }
+
+  const targetCurrency = options.targetCurrency || settingsSource?.targetCurrency || 'USD';
+  const hostname = (typeof window !== 'undefined' && window.location?.hostname)
+    ? window.location.hostname.replace(/^www\./, '').toLowerCase()
+    : '';
+  const siteOverride = options.siteOverride !== undefined
+    ? options.siteOverride
+    : (settingsSource?.perSite?.[hostname]?.assumedCurrency ?? null);
+  const ambiguousDollarSetting = options.ambiguousDollarSetting !== undefined
+    ? options.ambiguousDollarSetting
+    : (settingsSource?.ambiguousDollar ?? 'USD');
+  const minThreshold = options.minCandidateThreshold !== undefined ? options.minCandidateThreshold : 3;
+
+  const dryScanner = new PageScanner({
+    doc: document,
+    targetCurrency,
+    context: {
+      siteOverride: siteOverride || null,
+      ambiguousDollarSetting: ambiguousDollarSetting || 'USD'
+    }
+  });
+
+  const { count, primaryCurrency } = dryScanner.scanCandidates(document.body);
+  if (count < minThreshold) {
+    return { success: true, offered: false, count };
+  }
+
+  await ensurePillSettings();
+  const effectiveCrypto = resolvePillCrypto();
+
+  if (!currentUI) {
+    currentUI = new InPageUI({
+      doc: document,
+      mode: 'offer',
+      targetCurrency,
+      sourceCurrency: primaryCurrency,
+      isConverted: false,
+      convertedCount: count,
+      theme: resolvePillTheme(),
+      showCrypto: effectiveCrypto,
+      autoCollapse: true,
+      onShowOriginal: () => {
+        performRevert();
+      },
+      onConvert: (cur) => {
+        performConversion({ targetCurrency: cur, manual: true });
+      },
+      onChangeCurrency: (newCur) => {
+        performConversion({ targetCurrency: newCur, manual: true });
+      },
+      onAcceptOffer: (cur) => {
+        performConversion({ targetCurrency: cur, manual: true });
+      },
+      onAlwaysOnSite: (cur) => {
+        if (hostname) {
+          sendMessage({ type: MSG.ACCEPT_ALWAYS_SITE, payload: { hostname } }).catch(() => {});
+        }
+        performConversion({ targetCurrency: cur, manual: true });
+      },
+      onDismissOffer: () => {
+        if (hostname) {
+          sendMessage({ type: MSG.DISMISS_OFFER, payload: { hostname } }).catch(() => {});
+        }
+      }
+    });
+    currentUI.mount(uiCssText);
+  } else {
+    currentUI.update({
+      mode: 'offer',
+      isConverted: false,
+      targetCurrency,
+      sourceCurrency: primaryCurrency,
+      count,
+      theme: resolvePillTheme(),
+      showCrypto: effectiveCrypto
+    });
+  }
+
+  if (!currentUI.isDismissedForSession) {
+    currentUI.show();
+  }
+
+  return {
+    success: true,
+    offered: !currentUI.isDismissedForSession,
+    count,
+    primaryCurrency,
+    targetCurrency
+  };
+}
+
 function initContentScript() {
   void ensurePillSettings();
-  // Tooltip event delegation
+  // Tooltip event delegation with 0ms warmup when moving between prices within 400ms
   document.addEventListener('mouseover', (e) => {
     if (!isConverted || !currentScanner || !currentUI) return;
     const target = e.target;
@@ -323,6 +427,10 @@ function initContentScript() {
 
     const { element: anchorEl, meta } = hoverHit;
     if (meta) {
+      const isWarm = (Date.now() - lastTooltipHideTime) <= 400 || currentUI.tooltipElement?.classList.contains('visible');
+      if (currentUI.tooltipElement) {
+        currentUI.tooltipElement.style.transition = isWarm ? 'none' : '';
+      }
       currentUI.showTooltip({
         originalAmount: meta.originalAmount,
         originalCurrency: meta.originalCurrency,
@@ -342,6 +450,7 @@ function initContentScript() {
     if (!target || target.nodeType !== 1) return;
 
     if (currentScanner.getHoverMetadata(target)) {
+      lastTooltipHideTime = Date.now();
       currentUI.hideTooltip();
     }
   }, { passive: true });
@@ -356,6 +465,13 @@ function initContentScript() {
           .then(result => sendResponse(result))
           .catch(err => sendResponse({ success: false, error: err.message }));
         return true; // Keep channel open for async response
+      }
+
+      if (message.type === MSG.OFFER_PAGE) {
+        performOffer(message.payload || {})
+          .then(result => sendResponse(result))
+          .catch(err => sendResponse({ success: false, error: err.message }));
+        return true;
       }
 
       if (message.type === MSG.REVERT_PAGE) {

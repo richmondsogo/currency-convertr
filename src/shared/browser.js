@@ -178,7 +178,15 @@ export async function hasOriginPermission(origin) {
  */
 export async function requestOriginPermission(origin) {
   const b = getBrowser();
-  if (!b || !b.permissions || !b.permissions.request) return false;
+  if (!b || !b.permissions) return true;
+
+  try {
+    if (await hasOriginPermission(origin)) {
+      return true;
+    }
+  } catch {}
+
+  if (!b.permissions.request) return false;
 
   const pattern = origin.endsWith('/*') ? origin : `${origin}/*`;
   try {

@@ -42,7 +42,7 @@ import {
   AlertDialogTrigger,
 } from "@/ui/components/ui/alert-dialog";
 import {
-  Sliders,
+  SlidersHorizontal,
   Coins,
   Globe,
   Palette,
@@ -50,18 +50,18 @@ import {
   Info,
   Sun,
   Moon,
-  Laptop,
+  Desktop,
   Check,
-  ChevronsUpDown,
-  Search,
-  Trash2,
-  ExternalLink,
-  Download,
-  Upload,
-  RotateCcw,
-  AlertCircle,
+  CaretUpDown,
+  MagnifyingGlass,
+  Trash,
+  ArrowSquareOut,
+  DownloadSimple,
+  UploadSimple,
+  ArrowCounterClockwise,
+  WarningCircle,
   Plus,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { getAllCurrencies, getCurrencyMeta } from "../shared/currencies.js";
 import { MSG } from "../shared/messaging.js";
 import { sendMessage, getBrowser, requestOriginPermission } from "../shared/browser.js";
@@ -92,7 +92,7 @@ const SECTIONS = [
     id: "general",
     title: "General",
     description: "Default target currency, visual formatting, and interface triggers.",
-    icon: Sliders,
+    icon: SlidersHorizontal,
   },
   {
     id: "currencies",
@@ -312,17 +312,6 @@ export function OptionsApp() {
     );
   }, [settings?.showCrypto]);
 
-  const filteredTargetCurrencies = useMemo(() => {
-    if (!targetSearch) return allCurrencies;
-    const q = targetSearch.toLowerCase().trim();
-    return allCurrencies.filter(
-      (c) =>
-        c.code.toLowerCase().includes(q) ||
-        c.name.toLowerCase().includes(q) ||
-        c.symbol.toLowerCase().includes(q)
-    );
-  }, [allCurrencies, targetSearch]);
-
   const availableUnpinnedCurrencies = useMemo(() => {
     const pinned = settings?.pinnedCurrencies || [];
     const unpinned = allCurrencies.filter((c) => !pinned.includes(c.code));
@@ -491,7 +480,7 @@ export function OptionsApp() {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center font-sans p-6">
         <div className="max-w-md w-full space-y-4 text-center">
-          <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
+          <WarningCircle weight="fill" className="h-10 w-10 text-destructive mx-auto" />
           <h1 className="text-lg font-semibold tracking-tight text-foreground">Failed to load preferences</h1>
           <p className="text-sm text-muted-foreground">{loadError}</p>
           <Button onClick={loadInitialSettings} variant="default" className="mt-2">
@@ -517,16 +506,10 @@ export function OptionsApp() {
         <header className="border-b border-border bg-background/90 backdrop-blur sticky top-0 z-40">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <CanjiSymbol cut="main" size={28} />
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-base tracking-[-0.02em] text-foreground">canji</span>
-                  <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
-                    v{typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "2.0.0"} ({typeof __BUILD_GIT_SHA__ !== "undefined" ? __BUILD_GIT_SHA__ : "dev"})
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">Prices, in your currency — Preferences</p>
-              </div>
+              <CanjiLockup cut="main" size={26} wordmarkClassName="text-base font-bold" />
+              <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground border border-border/50">
+                v{typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "2.0.0"} ({typeof __BUILD_GIT_SHA__ !== "undefined" ? __BUILD_GIT_SHA__ : "dev"})
+              </span>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -544,7 +527,7 @@ export function OptionsApp() {
                   <Moon className="h-3.5 w-3.5 mr-1" /> Dark
                 </ToggleGroupItem>
                 <ToggleGroupItem value="system" aria-label="System theme" className="h-7 px-2 text-xs">
-                  <Laptop className="h-3.5 w-3.5 mr-1" /> System
+                  <Desktop className="h-3.5 w-3.5 mr-1" /> System
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
@@ -579,6 +562,7 @@ export function OptionsApp() {
                   >
                     <Icon
                       aria-hidden="true"
+                      weight={isActive ? "bold" : "regular"}
                       className={`h-4 w-4 shrink-0 ${
                         isActive
                           ? "text-foreground"
@@ -656,7 +640,7 @@ export function OptionsApp() {
                         className="w-[200px] justify-between font-mono text-xs h-9 bg-background"
                       >
                         <span>{settings.ambiguousDollar} — {getCurrencyMeta(settings.ambiguousDollar)?.name || "Dollar"}</span>
-                        <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                        <CaretUpDown weight="bold" className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[220px] p-0" align="end">
@@ -680,7 +664,8 @@ export function OptionsApp() {
                                 >
                                   <div className="flex items-center">
                                     <Check
-                                      className={`mr-2 h-3.5 w-3.5 ${
+                                      weight="bold"
+                                      className={`mr-2 h-3.5 w-3.5 text-accent ${
                                         settings.ambiguousDollar === code
                                           ? "opacity-100"
                                           : "opacity-0"
@@ -892,7 +877,7 @@ export function OptionsApp() {
                               onClick={() => handleRemovePinned(code)}
                               className="text-muted-foreground hover:text-destructive p-0.5 rounded transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Trash weight="bold" className="h-3 w-3" />
                             </button>
                           </div>
                         );
@@ -903,7 +888,7 @@ export function OptionsApp() {
                   {/* Limit message */}
                   {settings.pinnedCurrencies.length >= 8 && (
                     <p className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
-                      <AlertCircle className="h-3.5 w-3.5" />
+                      <WarningCircle weight="bold" className="h-3.5 w-3.5" />
                       Maximum 8 pinned currencies reached. Remove a currency to add another.
                     </p>
                   )}
@@ -935,7 +920,7 @@ export function OptionsApp() {
                               ? "Pinned limit reached (8 max)"
                               : "Search currency to pin..."}
                           </span>
-                          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                          <CaretUpDown weight="bold" className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-[260px] p-0" align="start">
@@ -1044,7 +1029,7 @@ export function OptionsApp() {
                       aria-label="Add site"
                       className="h-9 text-xs px-3 shrink-0"
                     >
-                      <Plus className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+                      <Plus weight="bold" className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
                       Add site
                     </Button>
                   </div>
@@ -1054,7 +1039,7 @@ export function OptionsApp() {
                       role="alert"
                       className="text-xs text-destructive font-medium flex items-center gap-1 pt-1"
                     >
-                      <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                      <WarningCircle weight="bold" className="h-3.5 w-3.5" aria-hidden="true" />
                       {newSiteError}
                     </p>
                   )}
@@ -1201,13 +1186,13 @@ export function OptionsApp() {
                       <Moon className="h-3.5 w-3.5 mr-1.5" /> Dark
                     </ToggleGroupItem>
                     <ToggleGroupItem value="system" aria-label="System theme" className="h-8 px-3 text-xs">
-                      <Laptop className="h-3.5 w-3.5 mr-1.5" /> System
+                      <Desktop className="h-3.5 w-3.5 mr-1.5" /> System
                     </ToggleGroupItem>
                   </ToggleGroup>
                 </div>
                 <Separator />
 
-                {/* Display Mode */}
+                {/* Display Mode — Interactive Visual Preview Cards */}
                 <div className="space-y-3 py-2">
                   <Label className="text-sm font-medium text-foreground">Display Mode</Label>
                   <p className="text-xs text-muted-foreground">
@@ -1219,9 +1204,9 @@ export function OptionsApp() {
                       {
                         value: "replace",
                         title: "Replace in place",
-                        desc: "Swaps original price cleanly; hover reveals original.",
+                        desc: "Swaps original price cleanly. Hover any price to inspect original amount and live rate.",
                         preview: (
-                          <span className="font-mono text-xs font-medium text-foreground border-b border-dashed border-accent pb-0.5">
+                          <span className="font-mono text-xs font-semibold text-foreground border-b border-dotted border-border pb-0.5">
                             {selectedTargetMeta?.symbol || "$"}277.14
                           </span>
                         ),
@@ -1229,22 +1214,22 @@ export function OptionsApp() {
                       {
                         value: "append",
                         title: "Beside original",
-                        desc: "Keeps original price and appends converted badge.",
+                        desc: "Keeps original price and appends converted amount side-by-side in parentheses.",
                         preview: (
                           <span className="font-mono text-xs inline-flex items-center gap-1.5">
                             <span className="text-muted-foreground">€249.00</span>
-                            <span className="px-1.5 py-0.5 rounded bg-accent/15 text-foreground font-medium">
-                              {selectedTargetMeta?.symbol || "$"}277.14
+                            <span className="px-1.5 py-0.5 rounded bg-secondary text-foreground font-medium">
+                              ({selectedTargetMeta?.symbol || "$"}277.14)
                             </span>
                           </span>
                         ),
                       },
                       {
                         value: "replace_highlight",
-                        title: "Soft highlight",
-                        desc: "Replaces price with a warm Pine pill highlight.",
+                        title: "Replace + Highlight",
+                        desc: "Swaps price and applies subtle Pine tint with dashed underline for instant recognition.",
                         preview: (
-                          <span className="font-mono text-xs font-medium px-2 py-0.5 rounded bg-accent/20 text-foreground">
+                          <span className="font-mono text-xs font-medium px-2 py-0.5 rounded bg-primary/10 text-primary border-b border-dashed border-primary">
                             {selectedTargetMeta?.symbol || "$"}277.14
                           </span>
                         ),
@@ -1256,23 +1241,32 @@ export function OptionsApp() {
                         aria-checked={settings.displayMode === opt.value}
                         key={opt.value}
                         onClick={() => updateSettings({ displayMode: opt.value })}
-                        className={`w-full text-left p-3.5 rounded-lg border cursor-pointer transition-colors flex flex-col justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        className={`w-full text-left p-3.5 rounded-xl border cursor-pointer transition-[border-color,background-color,box-shadow,transform] flex flex-col justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 motion-safe:active:scale-[0.99] ${
                           settings.displayMode === opt.value
-                            ? "border-accent bg-secondary/50"
-                            : "border-border hover:bg-secondary/20"
+                            ? "border-primary bg-secondary/60 shadow-xs ring-1 ring-primary/20"
+                            : "border-border/80 bg-card hover:bg-secondary/30 hover:border-border"
                         }`}
                       >
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-foreground">{opt.title}</span>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="text-sm font-semibold tracking-tight text-foreground">{opt.title}</div>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{opt.desc}</p>
+                          </div>
+                          <div
+                            className={`w-4 h-4 rounded-full border shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
+                              settings.displayMode === opt.value
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground/40 bg-transparent"
+                            }`}
+                            aria-hidden="true"
+                          >
                             {settings.displayMode === opt.value && (
-                              <Check className="h-4 w-4 text-accent" aria-hidden="true" />
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{opt.desc}</p>
                         </div>
-                        <div className="p-2 rounded-md bg-background border border-border/70 flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Preview</span>
+                        <div className="p-2.5 rounded-lg bg-background border border-border/70 flex items-center justify-between">
+                          <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">Preview</span>
                           {opt.preview}
                         </div>
                       </button>
@@ -1297,10 +1291,10 @@ export function OptionsApp() {
                     id="btn-export-settings"
                     variant="outline"
                     onClick={handleExportJson}
-                    className="text-xs h-9 shrink-0"
+                    className="text-xs h-9 shrink-0 gap-1.5"
                   >
-                    <Download className="h-3.5 w-3.5 mr-1.5" />
-                    Export Settings JSON
+                    <DownloadSimple weight="bold" className="h-3.5 w-3.5" />
+                    <span>Export Settings JSON</span>
                   </Button>
                 </div>
                 <Separator />
@@ -1325,10 +1319,10 @@ export function OptionsApp() {
                     <Button
                       variant="outline"
                       onClick={() => importFileInputRef.current?.click()}
-                      className="text-xs h-9 shrink-0"
+                      className="text-xs h-9 shrink-0 gap-1.5"
                     >
-                      <Upload className="h-3.5 w-3.5 mr-1.5" />
-                      Import Settings JSON
+                      <UploadSimple weight="bold" className="h-3.5 w-3.5" />
+                      <span>Import Settings JSON</span>
                     </Button>
                   </div>
                 </div>
@@ -1345,9 +1339,9 @@ export function OptionsApp() {
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button id="btn-reset-defaults" variant="destructive" className="text-xs h-9 shrink-0">
-                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                        Reset Defaults...
+                      <Button id="btn-reset-defaults" variant="destructive" className="text-xs h-9 shrink-0 gap-1.5">
+                        <ArrowCounterClockwise weight="bold" className="h-3.5 w-3.5" />
+                        <span>Reset Defaults...</span>
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -1472,7 +1466,7 @@ export function OptionsApp() {
                       className="inline-flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg border border-border text-xs font-medium hover:bg-secondary/40 transition-colors"
                     >
                       <span>Privacy Policy</span>
-                      <ExternalLink className="h-3 w-3 opacity-60" />
+                      <ArrowSquareOut weight="bold" className="h-3 w-3 opacity-60" />
                     </a>
                     <a
                       href="https://github.com/richmondsogo/currency-convertr"
@@ -1481,7 +1475,7 @@ export function OptionsApp() {
                       className="inline-flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg border border-border text-xs font-medium hover:bg-secondary/40 transition-colors"
                     >
                       <span>GitHub Repository</span>
-                      <ExternalLink className="h-3 w-3 opacity-60" />
+                      <ArrowSquareOut weight="bold" className="h-3 w-3 opacity-60" />
                     </a>
                   </div>
                 </div>

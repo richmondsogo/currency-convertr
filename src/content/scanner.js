@@ -136,6 +136,7 @@ export class PageScanner {
     if (root.querySelectorAll) {
       const allEls = root.querySelectorAll('*');
       for (const el of allEls) {
+        if (this._isNodeIgnored(el)) continue;
         if (el.shadowRoot) {
           roots.push(...this._findAllRoots(el.shadowRoot));
         }

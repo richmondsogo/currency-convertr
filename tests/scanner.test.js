@@ -487,3 +487,31 @@ test('scanner: context.siteOverride and context.ambiguousDollarSetting disambigu
   assert.ok(dom2.window.document.getElementById('p2').textContent.includes('110.00'));
   assert.equal(scannerAmbiguous.primarySourceCurrency, 'CAD');
 });
+
+test('scanner: scanCandidates performs read-only candidate counting without mutating DOM', () => {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="product-1">€49.00</div>
+    <div class="product-2">€89.50</div>
+    <div class="product-3">€120.00</div>
+    <div class="domestic">$15.00 USD</div>
+  </body></html>`;
+  const dom = new JSDOM(html);
+  const doc = dom.window.document;
+  const originalHtml = doc.body.innerHTML;
+
+  const scanner = new PageScanner({
+    doc,
+    targetCurrency: 'USD'
+  });
+
+  const candidates = scanner.scanCandidates(doc.body);
+  assert.equal(candidates.count, 3, 'Must detect 3 foreign EUR prices and ignore domestic USD');
+  assert.equal(candidates.primaryCurrency, 'EUR', 'Primary detected foreign currency should be EUR');
+  assert.equal(candidates.targetCurrency, 'USD');
+
+  // Verify ZERO DOM mutation
+  assert.equal(doc.body.innerHTML, originalHtml, 'scanCandidates must NOT mutate any DOM nodes or attributes');
+  assert.equal(scanner.convertedCount, 0, 'scanner.convertedCount must remain 0');
+  assert.equal(scanner.isConverted, false, 'scanner.isConverted must remain false');
+});
+
