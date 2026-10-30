@@ -57,7 +57,7 @@ test('E2E Options: Complete rebuild verification covering all 10 requirements', 
     await optionsPage.waitForSelector('h1');
 
     const title = await optionsPage.title();
-    assert.equal(title, 'General — Currency Convertr', 'document.title must reflect the active section');
+    assert.equal(title, 'General — Canji', 'document.title must reflect the active section');
 
     const heading = await optionsPage.locator('h1').textContent();
     assert.equal(heading.trim(), 'General');

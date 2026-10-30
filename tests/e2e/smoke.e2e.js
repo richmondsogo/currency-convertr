@@ -17,7 +17,7 @@ test('E2E Smoke: Extension loads in real browser, service worker is alive, and o
     await optionsPage.waitForLoadState('domcontentloaded');
 
     const optionsTitle = await optionsPage.title();
-    assert.equal(optionsTitle, 'General — Currency Convertr', 'Options page title must match');
+    assert.equal(optionsTitle, 'General — Canji', 'Options page title must match');
 
     const hasNav = await optionsPage.locator('nav[aria-label="Settings sections"]').isVisible();
     assert.ok(hasNav, 'Options page navigation must be visible');
@@ -31,7 +31,7 @@ test('E2E Smoke: Extension loads in real browser, service worker is alive, and o
     await popupPage.waitForLoadState('domcontentloaded');
 
     const popupTitle = await popupPage.title();
-    assert.equal(popupTitle, 'Currency Convertr', 'Popup page title must match');
+    assert.equal(popupTitle, 'Canji', 'Popup page title must match');
 
     const hasQuickConvert = await popupPage.locator('#btn-convert-toggle').isVisible();
     assert.ok(hasQuickConvert, 'Convert page button must be visible in popup');

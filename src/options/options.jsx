@@ -61,16 +61,13 @@ import {
   RotateCcw,
   AlertCircle,
   Plus,
-  Command as CommandIcon,
 } from "lucide-react";
-import { CURRENCIES_DATA } from "../shared/currencies-data.js";
 import { getAllCurrencies, getCurrencyMeta } from "../shared/currencies.js";
 import { MSG } from "../shared/messaging.js";
-import { sendMessage, getBrowser } from "../shared/browser.js";
+import { sendMessage, getBrowser, requestOriginPermission } from "../shared/browser.js";
 import {
   SETTINGS_STORAGE_KEY,
   DEFAULT_SETTINGS,
-  getSiteMode,
   setSiteMode,
   normalizeHost,
   migrateSettings,
@@ -79,10 +76,10 @@ import {
 } from "../shared/settings.js";
 import { SiteModeControl } from "@/ui/components/SiteModeControl";
 import { CurrencyCombobox } from "@/ui/components/CurrencyCombobox";
+import { CanjiSymbol, CanjiLockup } from "@/ui/components/CanjiLogo";
 import {
   getEffectiveSiteCaption,
   validateDomainInput,
-  canAddPinned,
   validateImportContent,
 } from "@/ui/lib/site-rules";
 import { applyTheme, subscribeSystemTheme } from "../shared/theme.js";
@@ -177,7 +174,7 @@ export function OptionsApp() {
   // Sync document.title and URL hash with currentSection
   useEffect(() => {
     const active = SECTIONS.find((s) => s.id === currentSection) || SECTIONS[0];
-    document.title = `${active.title} — Currency Convertr`;
+    document.title = `${active.title} — Canji`;
     if (window.location.hash !== `#${currentSection}`) {
       window.location.hash = `#${currentSection}`;
     }
@@ -359,7 +356,7 @@ export function OptionsApp() {
   };
 
   // Handlers for Site Rules
-  const handleAddSiteRule = (e) => {
+  const handleAddSiteRule = async (e) => {
     e.preventDefault();
     setNewSiteError("");
     const check = validateDomainInput(newSiteDomain, settings.perSite);
@@ -368,6 +365,14 @@ export function OptionsApp() {
       return;
     }
     const clean = check.clean;
+
+    if (newSiteMode === "always") {
+      const granted = await requestOriginPermission(`https://${clean}/*`);
+      if (!granted) {
+        setNewSiteError(`Permission denied for ${clean}`);
+        return;
+      }
+    }
 
     const updatedPerSite = { ...(settings.perSite || {}) };
     updatedPerSite[clean] = {
@@ -381,7 +386,14 @@ export function OptionsApp() {
     setNewSiteError("");
   };
 
-  const handleUpdateSiteMode = (host, mode) => {
+  const handleUpdateSiteMode = async (host, mode) => {
+    if (mode === "always") {
+      const granted = await requestOriginPermission(`https://${host}/*`);
+      if (!granted) {
+        toast.error(`Permission denied for ${host}`);
+        return;
+      }
+    }
     const updated = { ...(settings.perSite || {}) };
     setSiteMode({ perSite: updated }, host, mode);
     updateSettings({ perSite: updated }, `Updated ${host} to ${mode.toUpperCase()}`);
@@ -418,7 +430,7 @@ export function OptionsApp() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `currency-convertr-settings-${new Date().toISOString().split("T")[0]}.json`;
+    a.download = `canji-settings-${new Date().toISOString().split("T")[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Settings exported to JSON");
@@ -430,11 +442,11 @@ export function OptionsApp() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const parsed = JSON.parse(event.target.result);
-        if (!parsed || typeof parsed !== "object") {
-          throw new Error("File content must be a JSON object");
+        const check = validateImportContent(event.target.result);
+        if (!check.ok) {
+          throw new Error(check.error);
         }
-        const migrated = migrateSettings(parsed);
+        const migrated = migrateSettings(check.data);
         await updateSettings(migrated, "Settings restored from backup");
       } catch (err) {
         console.error("[Options] Import failed:", err);
@@ -465,8 +477,8 @@ export function OptionsApp() {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center font-sans">
         <div className="space-y-3 text-center">
-          <div className="w-7 h-7 mx-auto rounded-md bg-primary text-primary-foreground flex items-center justify-center font-mono font-medium text-xs animate-pulse">
-            fx
+          <div className="mx-auto flex items-center justify-center animate-pulse">
+            <CanjiSymbol cut="main" size={32} />
           </div>
           <p className="text-sm text-muted-foreground">Loading preferences...</p>
         </div>
@@ -505,17 +517,15 @@ export function OptionsApp() {
         <header className="border-b border-border bg-background/90 backdrop-blur sticky top-0 z-40">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <span className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-mono font-medium text-xs tracking-tight">
-                fx
-              </span>
+              <CanjiSymbol cut="main" size={28} />
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-sm tracking-tight text-foreground">Currency Convertr</span>
+                  <span className="font-semibold text-base tracking-[-0.02em] text-foreground">canji</span>
                   <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
                     v{typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "2.0.0"} ({typeof __BUILD_GIT_SHA__ !== "undefined" ? __BUILD_GIT_SHA__ : "dev"})
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">Preferences and Configuration</p>
+                <p className="text-xs text-muted-foreground">Prices, in your currency — Preferences</p>
               </div>
             </div>
 
@@ -753,7 +763,7 @@ export function OptionsApp() {
                       Show in-page pill
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      Display the OLED Dynamic Island capsule at the top of web pages when prices are converted.
+                      Display the Paper &amp; Pine Dynamic Island capsule at the top of web pages when prices are converted.
                     </p>
                   </div>
                   <Switch
@@ -855,9 +865,9 @@ export function OptionsApp() {
                     </Badge>
                   </div>
 
-                  {/* Chips container */}
+                  {/* Chips container (flat hairline row, no boxed card) */}
                   <div
-                    className="flex flex-wrap gap-2 p-3 bg-secondary/30 rounded-lg border border-border min-h-[48px] items-center"
+                    className="flex flex-wrap gap-2 py-3 border-y border-border min-h-[48px] items-center"
                     aria-label="Pinned currencies list"
                   >
                     {settings.pinnedCurrencies.length === 0 ? (
@@ -1204,22 +1214,40 @@ export function OptionsApp() {
                     Choose how converted prices are rendered directly on host web pages.
                   </p>
 
-                  <div role="radiogroup" aria-label="Display mode" className="space-y-2 pt-1">
+                  <div role="radiogroup" aria-label="Display mode" className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                     {[
                       {
                         value: "replace",
-                        title: "Replace original price",
-                        desc: "Replaces original price text in-place with native currency; hover displays original in tooltip.",
+                        title: "Replace in place",
+                        desc: "Swaps original price cleanly; hover reveals original.",
+                        preview: (
+                          <span className="font-mono text-xs font-medium text-foreground border-b border-dashed border-accent pb-0.5">
+                            {selectedTargetMeta?.symbol || "$"}277.14
+                          </span>
+                        ),
                       },
                       {
                         value: "append",
-                        title: "Append converted price",
-                        desc: "Displays converted amount alongside original price (e.g. $20.00 ≈ ₦30,512).",
+                        title: "Beside original",
+                        desc: "Keeps original price and appends converted badge.",
+                        preview: (
+                          <span className="font-mono text-xs inline-flex items-center gap-1.5">
+                            <span className="text-muted-foreground">€249.00</span>
+                            <span className="px-1.5 py-0.5 rounded bg-accent/15 text-foreground font-medium">
+                              {selectedTargetMeta?.symbol || "$"}277.14
+                            </span>
+                          </span>
+                        ),
                       },
                       {
                         value: "replace_highlight",
-                        title: "Replace and highlight",
-                        desc: "Replaces price and applies a subtle highlight background to converted figures.",
+                        title: "Soft highlight",
+                        desc: "Replaces price with a warm Pine pill highlight.",
+                        preview: (
+                          <span className="font-mono text-xs font-medium px-2 py-0.5 rounded bg-accent/20 text-foreground">
+                            {selectedTargetMeta?.symbol || "$"}277.14
+                          </span>
+                        ),
                       },
                     ].map((opt) => (
                       <button
@@ -1228,19 +1256,25 @@ export function OptionsApp() {
                         aria-checked={settings.displayMode === opt.value}
                         key={opt.value}
                         onClick={() => updateSettings({ displayMode: opt.value })}
-                        className={`w-full text-left p-3 rounded-lg border cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        className={`w-full text-left p-3.5 rounded-lg border cursor-pointer transition-colors flex flex-col justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                           settings.displayMode === opt.value
                             ? "border-accent bg-secondary/50"
                             : "border-border hover:bg-secondary/20"
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-foreground">{opt.title}</span>
-                          {settings.displayMode === opt.value && (
-                            <Check className="h-4 w-4 text-accent" aria-hidden="true" />
-                          )}
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-foreground">{opt.title}</span>
+                            {settings.displayMode === opt.value && (
+                              <Check className="h-4 w-4 text-accent" aria-hidden="true" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{opt.desc}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                        <div className="p-2 rounded-md bg-background border border-border/70 flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Preview</span>
+                          {opt.preview}
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -1342,22 +1376,39 @@ export function OptionsApp() {
             {/* SECTION 6: ABOUT */}
             {currentSection === "about" && (
               <div className="space-y-6">
+                {/* Brand Hero with 3-Layer Feature Cut */}
+                <div className="flex items-center gap-5 p-4 rounded-xl bg-secondary/40 border border-border/80">
+                  <CanjiSymbol cut="feature" size={72} />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-xl tracking-[-0.02em] text-foreground">canji</span>
+                      <Badge variant="secondary" className="font-mono text-xs">
+                        v{typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "2.0.0"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm font-medium text-foreground">Prices, in your currency.</p>
+                    <p className="text-xs text-muted-foreground">
+                      From Hausa <em>canji</em> (change, exchange) — calm, zero-telemetry in-page currency conversion.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="space-y-3">
                   <h2 className="text-sm font-medium text-foreground">Extension Version</h2>
-                  <div className="p-3 bg-secondary/30 rounded-lg border border-border space-y-1 font-mono text-xs">
-                    <div className="flex justify-between">
+                  <div className="divide-y divide-border border-y border-border font-mono text-xs">
+                    <div className="flex justify-between py-2">
                       <span className="text-muted-foreground">Version:</span>
                       <span className="font-medium text-foreground">
                         {typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "2.0.0"}
                       </span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between py-2">
                       <span className="text-muted-foreground">Git Commit:</span>
                       <span className="text-foreground">
                         {typeof __BUILD_GIT_SHA__ !== "undefined" ? __BUILD_GIT_SHA__ : "dev"}
                       </span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between py-2">
                       <span className="text-muted-foreground">Build Timestamp:</span>
                       <span className="text-foreground">
                         {typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : "development"}
@@ -1373,21 +1424,21 @@ export function OptionsApp() {
                   <p className="text-xs text-muted-foreground">
                     Exchange rates are cached locally for 6 hours using a 3-tier resilient fallback architecture.
                   </p>
-                  <div className="p-3 bg-secondary/30 rounded-lg border border-border space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
+                  <div className="divide-y divide-border border-y border-border text-xs">
+                    <div className="flex items-center justify-between py-2">
                       <span className="text-muted-foreground">Primary Tier:</span>
                       <span className="font-medium">European Central Bank (Frankfurter API)</span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-2">
                       <span className="text-muted-foreground">Secondary Tier:</span>
                       <span className="font-medium">Fawaz Ahmed Currency API (jsDelivr CDN)</span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-2">
                       <span className="text-muted-foreground">Fallback Tier:</span>
                       <span className="font-medium">Cloudflare Pages Hosted Mirror</span>
                     </div>
                     {ratesInfo && ratesInfo.timestamp && (
-                      <div className="flex items-center justify-between pt-1 border-t border-border font-mono text-[11px]">
+                      <div className="flex items-center justify-between py-2 font-mono text-[11px]">
                         <span className="text-muted-foreground">Last Updated:</span>
                         <span>{new Date(ratesInfo.timestamp).toLocaleString()}</span>
                       </div>
@@ -1412,10 +1463,10 @@ export function OptionsApp() {
 
                 {/* Links */}
                 <div className="space-y-3">
-                  <h2 className="text-sm font-medium text-foreground">Privacy & Source Code</h2>
+                  <h2 className="text-sm font-medium text-foreground">Privacy &amp; Source Code</h2>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <a
-                      href="https://github.com/richmondsogo/currency-converter-v2/blob/main/PRIVACY_POLICY.md"
+                      href="https://github.com/richmondsogo/currency-convertr/blob/main/PRIVACY_POLICY.md"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg border border-border text-xs font-medium hover:bg-secondary/40 transition-colors"
@@ -1424,7 +1475,7 @@ export function OptionsApp() {
                       <ExternalLink className="h-3 w-3 opacity-60" />
                     </a>
                     <a
-                      href="https://github.com/richmondsogo/currency-converter-v2"
+                      href="https://github.com/richmondsogo/currency-convertr"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg border border-border text-xs font-medium hover:bg-secondary/40 transition-colors"

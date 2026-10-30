@@ -93,12 +93,26 @@ async function buildMenus() {
 // -----------------------------------------------------------------------------
 // 3. PAGE INJECTION & CONVERSION ORCHESTRATION
 // -----------------------------------------------------------------------------
-async function convertPageOnTab(tabId, targetCurrency = null) {
+function extractNormalizedHost(rawUrl) {
+  if (!rawUrl) return '';
+  try {
+    const u = new URL(rawUrl);
+    return u.hostname.replace(/^www\./, '').toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+async function convertPageOnTab(tabId, targetCurrency = null, tabUrl = null) {
   const injected = await ensureInjected(tabId);
   if (!injected) return;
 
   const settings = await settingsManager.getSettings();
   const target = targetCurrency || settings.targetCurrency || 'USD';
+  const host = extractNormalizedHost(tabUrl);
+  const siteOverride = host && settings.perSite && settings.perSite[host]?.assumedCurrency
+    ? settings.perSite[host].assumedCurrency
+    : undefined;
   let ratesData;
   try {
     ratesData = await ratesEngine.getRates();
@@ -116,7 +130,9 @@ async function convertPageOnTab(tabId, targetCurrency = null) {
       provider: ratesData ? ratesData.provider : null,
       displayMode: settings.displayMode,
       roundWhole: settings.roundWhole,
-      showInPageBar: settings.showInPageBar
+      showInPageBar: settings.showInPageBar,
+      siteOverride,
+      ambiguousDollarSetting: settings.ambiguousDollar || 'USD'
     }
   });
 
@@ -140,32 +156,40 @@ async function revertPageOnTab(tabId) {
   }
 }
 
-async function togglePageConversionOnTab(tabId) {
+async function togglePageConversionOnTab(tabId, tabUrl = null) {
   const currentStatus = tabStatusMap.get(tabId);
   if (currentStatus && currentStatus.isConverted) {
     await revertPageOnTab(tabId);
   } else {
-    await convertPageOnTab(tabId);
+    await convertPageOnTab(tabId, null, tabUrl);
   }
 }
 
 // -----------------------------------------------------------------------------
 // 4. SELECTION CONVERSION (v1 feature)
 // -----------------------------------------------------------------------------
-async function handleSelectionConversion(text, targetCurrency) {
+async function handleSelectionConversion(text, targetCurrency, tabUrl = null) {
   const raw = (text || '').trim();
   if (!raw) {
-    notify('Currency Converter', 'No text selected. Highlight a price and try again.');
+    notify('Canji', 'No text selected. Highlight a price and try again.');
     return;
   }
 
   const amount = extractAmount(raw);
   if (amount === null) {
-    notify('Currency Converter', `No valid numeric price found in "${raw.slice(0, 50)}".`);
+    notify('Canji', `No valid numeric price found in "${raw.slice(0, 50)}".`);
     return;
   }
 
-  const fromCurrency = detectCurrency(raw);
+  const settings = await settingsManager.getSettings();
+  const host = extractNormalizedHost(tabUrl);
+  const siteOverride = (host && settings.perSite && settings.perSite[host]?.assumedCurrency) || null;
+  const ambiguousDollarSetting = settings.ambiguousDollar || 'USD';
+  const fromCurrency = detectCurrency(raw, {
+    siteOverride,
+    tld: host || undefined,
+    ambiguousDollarSetting
+  });
 
   try {
     const ratesData = await ratesEngine.getRates();
@@ -173,17 +197,19 @@ async function handleSelectionConversion(text, targetCurrency) {
     const converted = amount * rate;
 
     const formattedFrom = formatCurrency(amount, fromCurrency);
-    const formattedTo = formatCurrency(converted, targetCurrency);
+    const formattedTo = formatCurrency(converted, targetCurrency, {
+      roundWhole: Boolean(settings.roundWhole)
+    });
     const formattedUnit = formatCurrency(rate, targetCurrency);
 
     notify(
-      'Currency Converter',
+      'Canji',
       `${formattedFrom} = ${formattedTo}\nRate: 1 ${fromCurrency} = ${formattedUnit}`
     );
   } catch (err) {
-    console.error('[CurrencyConverter] Selection conversion failed:', err);
+    console.error('[Canji] Selection conversion failed:', err);
     notify(
-      'Currency Converter',
+      'Canji',
       `Unable to convert ${fromCurrency} to ${targetCurrency}. Verify network connection.`
     );
   }
@@ -201,13 +227,13 @@ if (api && api.contextMenus && api.contextMenus.onClicked) {
     // Selection conversion
     if (menuId.startsWith('cc-sel-')) {
       const targetCurrency = menuId.replace('cc-sel-', '');
-      await handleSelectionConversion(info.selectionText, targetCurrency);
+      await handleSelectionConversion(info.selectionText, targetCurrency, tab?.url);
       return;
     }
 
     // Page level convert
     if (menuId === 'cc-page-convert' && tab && tab.id) {
-      await convertPageOnTab(tab.id);
+      await convertPageOnTab(tab.id, null, tab.url);
       return;
     }
 
@@ -226,7 +252,7 @@ if (api && api.commands && api.commands.onCommand) {
       if (api.tabs && api.tabs.query) {
         api.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
           if (tabs && tabs[0] && tabs[0].id) {
-            await togglePageConversionOnTab(tabs[0].id);
+            await togglePageConversionOnTab(tabs[0].id, tabs[0].url);
           }
         });
       }
@@ -295,7 +321,7 @@ if (api && api.tabs && api.tabs.onUpdated) {
 
           if (shouldAutoConvert) {
             const target = settings.targetCurrency || 'USD';
-            await convertPageOnTab(tabId, target);
+            await convertPageOnTab(tabId, target, rawUrl);
           }
         } catch (err) {
           console.error('[CC Background] Auto-convert failed on tab:', tabId, err);

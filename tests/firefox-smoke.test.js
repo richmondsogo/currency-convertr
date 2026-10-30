@@ -46,6 +46,7 @@ test('Firefox MV3 Smoke: Add-on loads, popup opens, and converts prices on real 
   options.addArguments('-headless');
   options.addArguments('-remote-allow-system-access');
   options.setBinary(firefoxPath);
+  process.env.MOZ_REMOTE_ALLOW_SYSTEM_ACCESS = '1';
 
   const driver = await new Builder()
     .forBrowser('firefox')

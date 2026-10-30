@@ -421,3 +421,69 @@ test('scanner: Jumia Nigeria e-commerce price conversion and revert', () => {
   assert.equal(doc.body.innerHTML, originalHtml, 'Revert must restore exact original Jumia HTML');
 });
 
+
+test('scanner: getHoverMetadata resolves metadata for standard text-node prices in replace & append modes as well as split prices', () => {
+  const dom = new JSDOM(`
+    <!DOCTYPE html>
+    <html>
+      <body>
+        <div class="price-single">€249.00</div>
+        <div class="price-split"><span class="cur">€</span><span class="amt">680</span><span class="dec">.00</span></div>
+      </body>
+    </html>
+  `);
+  const doc = dom.window.document;
+
+  const scanner = new PageScanner({
+    doc,
+    targetCurrency: 'USD',
+    ratesTable: mockRates,
+    displayMode: 'replace',
+    rateDate: '2026-10-30'
+  });
+
+  const count = scanner.convert();
+  assert.equal(count, 2);
+
+  const singleEl = doc.querySelector('.price-single');
+  const splitEl = doc.querySelector('.price-split');
+
+  const singleHover = scanner.getHoverMetadata(singleEl);
+  assert.ok(singleHover, 'Standard text-node price in replace mode must return hover metadata');
+  assert.equal(singleHover.element, singleEl);
+  assert.equal(singleHover.meta.originalAmount, 249);
+  assert.equal(singleHover.meta.originalCurrency, 'EUR');
+  assert.equal(singleHover.meta.date, '2026-10-30');
+
+  const splitHover = scanner.getHoverMetadata(splitEl);
+  assert.ok(splitHover, 'Split-element price must return hover metadata');
+  assert.equal(splitHover.element, splitEl);
+  assert.equal(splitHover.meta.originalAmount, 680);
+  assert.equal(splitHover.meta.originalCurrency, 'EUR');
+});
+
+test('scanner: context.siteOverride and context.ambiguousDollarSetting disambiguate bare $ prices when converting to USD', () => {
+  const dom1 = new JSDOM('<!DOCTYPE html><html><head><meta property="og:price:currency" content="USD"></head><body><div id="p1">$150.00</div></body></html>');
+  const scannerSiteOverride = new PageScanner({
+    doc: dom1.window.document,
+    targetCurrency: 'USD',
+    ratesTable: mockRates, // CAD: 1.50, USD: 1.10 -> 150 / 1.5 * 1.1 = 110.00 USD
+    displayMode: 'replace',
+    context: { siteOverride: 'CAD' }
+  });
+  assert.equal(scannerSiteOverride.convert(), 1);
+  assert.ok(dom1.window.document.getElementById('p1').textContent.includes('110.00'));
+  assert.equal(scannerSiteOverride.primarySourceCurrency, 'CAD');
+
+  const dom2 = new JSDOM('<!DOCTYPE html><html><body><div id="p2">$150.00</div></body></html>');
+  const scannerAmbiguous = new PageScanner({
+    doc: dom2.window.document,
+    targetCurrency: 'USD',
+    ratesTable: mockRates,
+    displayMode: 'replace',
+    context: { ambiguousDollarSetting: 'CAD' }
+  });
+  assert.equal(scannerAmbiguous.convert(), 1);
+  assert.ok(dom2.window.document.getElementById('p2').textContent.includes('110.00'));
+  assert.equal(scannerAmbiguous.primarySourceCurrency, 'CAD');
+});

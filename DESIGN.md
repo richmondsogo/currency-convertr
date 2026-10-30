@@ -1,7 +1,7 @@
 ---
-name: currency-convertr
+name: canji
 version: 2.1.0-draft
-description: Paper & Pine design system for Currency Convertr browser extension.
+description: Paper & Pine design system for Canji browser extension.
 palette:
   light:
     background: "#F7F5F0"
@@ -43,7 +43,7 @@ motion:
 
 # Design Philosophy & Technical UI/UX Specifications
 
-> **Project**: Currency Convertr  
+> **Project**: Canji  
 > **Version**: 2.1.0-draft  
 > **Aesthetic**: Paper & Pine — Warm Editorial Minimalism  
 > **Architecture**: Cross-Browser Web Extension (Manifest V3)  
@@ -52,7 +52,7 @@ motion:
 
 ## 1. Overview
 
-Currency Convertr provides an unobtrusive, high-fidelity currency translation experience for web pages. Inspired by tactile archival stationery and precision instrumentation, the visual language departs entirely from sterile, cold zinc greys in favor of the **"Paper & Pine"** design system:
+Canji provides an unobtrusive, high-fidelity currency translation experience for web pages. Inspired by tactile archival stationery and precision instrumentation, the visual language departs entirely from sterile, cold zinc greys in favor of the **"Paper & Pine"** design system:
 - **Warm, tactile surfaces**: Natural paper canvases (`#F7F5F0` light, `#10100E` dark).
 - **Hairline structural division**: Whisper-quiet 1px borders (`#E2DED4` light, `#2A2926` dark).
 - **Ink-based hierarchy**: High-contrast near-black typography and ink primary actions.

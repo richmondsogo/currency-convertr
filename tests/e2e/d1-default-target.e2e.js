@@ -143,6 +143,7 @@ test('D1: Automatic and menu conversions ALWAYS use settings.targetCurrency (def
     // 5. Open a NEW page on the Always domain (shop.test/cart): MUST convert to NGN, NOT EUR!
     const newPage = await context.newPage();
     await newPage.goto('http://shop.test/cart');
+    await newPage.waitForSelector('#cc-dynamic-island-host', { timeout: 10000 }).catch(() => {});
     await newPage.waitForTimeout(3000);
 
     const newPageResult = await newPage.evaluate(() => {

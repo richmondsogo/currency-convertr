@@ -1,0 +1,31 @@
+{
+  "brand": "Canji",
+  "tagline": "Prices, in your currency",
+  "brief": "A lightweight browser extension that converts every price on any page into your currency, in place, and restores the originals in one click. Hausa 'canji' means change. For people who shop and read across borders; quiet, precise, trustworthy, developer-grade.",
+  "adjectives": ["precise", "quiet", "layered", "trustworthy"],
+  "criteria": "Success: reads as a C, survives 16 px in the toolbar, works in one colour and reversed, feels like a developer-grade tool rather than a finance brand.",
+  "industry": "software",
+  "nav": ["Features", "Privacy", "Install"],
+  "brand_color": "#1E6B52",
+  "greyscale": false,
+  "designer": "Canji identity",
+  "round": 2,
+  "concepts": [
+    {
+      "name": "Echo",
+      "symbol": "../symbol/canji-symbol.svg",
+      "lockup": "../lockups/canji-horizontal.svg",
+      "symbol_on_tile": "../symbol/canji-symbol-reversed.svg",
+      "lockup_on_dark": "../lockups/canji-horizontal-reversed.svg",
+      "tile_color": "#191815",
+      "idea": "A hexagonal C echoed inward: the original price and its converted twin, layered in one shape.",
+      "rationale": [
+        "The outer ink layer is the original value; the inner pine layer is the converted one",
+        "Reads as a C at a glance and as a hexagon, the shape of dev tooling",
+        "Three weights (feature, main, small) share one geometry, so it holds from favicon to hero"
+      ]
+    }
+  ],
+  "recommendation": "Echo: one idea, one geometry, three weights.",
+  "next_steps": ["Review the board", "Ship the icon set in the extension", "Adopt the guide for store assets"]
+}
