@@ -517,6 +517,77 @@ export const INLINE_UI_CSS = `
   outline-offset: 1px;
 }
 
+/* Ask Mode Offer Prompt Row inside Dynamic Island */
+.cc-offer-row {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.cc-dynamic-island.cc-mode-offer .cc-offer-row {
+  display: flex;
+}
+
+.cc-dynamic-island.cc-mode-offer .cc-island-compact,
+.cc-dynamic-island.cc-mode-offer .cc-island-expandable {
+  display: none;
+}
+
+.cc-offer-text {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--cc-text);
+  letter-spacing: -0.01em;
+}
+
+.cc-offer-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 2px;
+}
+
+.cc-offer-btn {
+  border-radius: 9999px;
+  padding: 2px 9px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: transform 120ms ease, opacity 120ms ease, border-color 140ms ease;
+}
+
+.cc-offer-btn:active {
+  transform: scale(0.97);
+}
+
+.cc-offer-btn:focus-visible {
+  outline: 2px solid var(--cc-accent);
+  outline-offset: 2px;
+}
+
+.cc-offer-btn-primary {
+  background: var(--cc-accent);
+  color: var(--cc-accent-fg);
+  border: 1px solid transparent;
+}
+
+.cc-offer-btn-primary:hover {
+  opacity: 0.92;
+}
+
+.cc-offer-btn-secondary {
+  background: var(--cc-raised);
+  color: var(--cc-text);
+  border: 1px solid var(--cc-hairline);
+}
+
+.cc-offer-btn-secondary:hover {
+  border-color: var(--cc-muted);
+}
+
 /* Collapsed Mini Pill */
 .cc-collapsed-pill {
   display: none;
@@ -562,6 +633,7 @@ export const INLINE_UI_CSS = `
   box-shadow: var(--cc-shadow);
   pointer-events: none;
   z-index: 2147483647;
+  width: max-content;
   max-width: 280px;
   opacity: 0;
   transform: translateY(4px);
@@ -601,6 +673,12 @@ export const INLINE_UI_CSS = `
   bottom: -4px;
   left: 50%;
   margin-left: -3px;
+}
+
+.cc-tooltip.flipped .cc-tooltip-caret {
+  bottom: auto;
+  top: -4px;
+  transform: rotate(225deg);
 }
 
 /* 3. Accessibility: transparency, contrast and motion preferences */
@@ -676,9 +754,38 @@ function createSvg(doc, width, height, viewBox, strokeWidth, paths = [], circles
   return svg;
 }
 
+function createCanjiSmallMark(doc, size = 15) {
+  const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(size));
+  svg.setAttribute('viewBox', '0 0 256 256');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', 'cc-brand-mark');
+  svg.style.flexShrink = '0';
+
+  const outerPath = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+  outerPath.setAttribute('fill', 'currentColor');
+  outerPath.setAttribute(
+    'd',
+    'M33.68 71.09 L33.68 184.91 L132.25 241.81 L222.32 189.81 L222.32 170.19 L132.25 222.19 L50.68 175.09 L50.68 80.91 L132.25 33.81 L222.32 85.81 L222.32 66.19 L132.25 14.19Z'
+  );
+  svg.appendChild(outerPath);
+
+  const innerPath = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+  innerPath.setAttribute('fill', 'var(--cc-accent)');
+  innerPath.setAttribute(
+    'd',
+    'M130.96 99.17 L130.96 156.83 L180.89 185.65 L222.32 161.73 L222.32 142.11 L180.89 166.03 L147.96 147.01 L147.96 108.99 L180.89 89.97 L222.32 113.89 L222.32 94.27 L180.89 70.35Z'
+  );
+  svg.appendChild(innerPath);
+
+  return svg;
+}
+
 export class InPageUI {
   constructor({
     doc = (typeof document !== 'undefined' ? document : null),
+    mode = 'converted',
     targetCurrency = 'USD',
     sourceCurrency = null,
     isConverted = true,
@@ -691,9 +798,13 @@ export class InPageUI {
     onShowOriginal = null,
     onConvert = null,
     onChangeCurrency = null,
+    onAcceptOffer = null,
+    onAlwaysOnSite = null,
+    onDismissOffer = null,
     onDismiss = null
   } = {}) {
     this.doc = doc;
+    this.mode = mode === 'offer' ? 'offer' : 'converted';
     this.targetCurrency = targetCurrency;
     this.sourceCurrency = sourceCurrency;
     this.isConverted = isConverted;
@@ -706,6 +817,9 @@ export class InPageUI {
     this.onShowOriginal = onShowOriginal;
     this.onConvert = onConvert;
     this.onChangeCurrency = onChangeCurrency;
+    this.onAcceptOffer = onAcceptOffer;
+    this.onAlwaysOnSite = onAlwaysOnSite;
+    this.onDismissOffer = onDismissOffer;
     this.onDismiss = onDismiss;
 
     this.rootContainer = null;
@@ -814,13 +928,92 @@ export class InPageUI {
     }
   }
 
+  _formatOfferText() {
+    const count = this.convertedCount !== undefined ? this.convertedCount : 0;
+    const noun = count === 1 ? 'price' : 'prices';
+    const srcPart = this.sourceCurrency && this.sourceCurrency !== this.targetCurrency
+      ? `${this.sourceCurrency} `
+      : '';
+    return `Detected ${count} ${srcPart}${noun} · Convert to ${this.targetCurrency}?`;
+  }
+
   _buildDynamicIsland() {
     const island = this.doc.createElement('div');
-    island.className = 'cc-dynamic-island cc-bar';
+    island.className = `cc-dynamic-island cc-bar${this.mode === 'offer' ? ' cc-mode-offer' : ''}`;
     island.setAttribute('role', 'toolbar');
-    island.setAttribute('aria-label', 'Currency Convertr Dynamic Island');
+    island.setAttribute('aria-label', 'Canji Dynamic Island');
 
-    // 1. Compact Row (Always visible in capsule)
+    // 0. Ask-Mode Offer Prompt Row (Active when mode === 'offer')
+    const offerRow = this.doc.createElement('div');
+    offerRow.className = 'cc-offer-row';
+
+    const offerDot = this.doc.createElement('div');
+    offerDot.className = 'cc-status-dot cc-offer-dot';
+    offerRow.appendChild(offerDot);
+
+    const offerText = this.doc.createElement('span');
+    offerText.className = 'cc-offer-text';
+    offerText.textContent = this._formatOfferText();
+    offerRow.appendChild(offerText);
+
+    const offerActions = this.doc.createElement('div');
+    offerActions.className = 'cc-offer-actions';
+
+    const btnOfferConvert = this.doc.createElement('button');
+    btnOfferConvert.type = 'button';
+    btnOfferConvert.className = 'cc-offer-btn cc-offer-btn-primary';
+    btnOfferConvert.textContent = 'Convert';
+    btnOfferConvert.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.onAcceptOffer) {
+        this.onAcceptOffer(this.targetCurrency);
+      } else if (this.onConvert) {
+        this.onConvert(this.targetCurrency);
+      }
+    });
+    offerActions.appendChild(btnOfferConvert);
+
+    const btnOfferAlways = this.doc.createElement('button');
+    btnOfferAlways.type = 'button';
+    btnOfferAlways.className = 'cc-offer-btn cc-offer-btn-secondary';
+    btnOfferAlways.textContent = 'Always on this site';
+    btnOfferAlways.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.onAlwaysOnSite) {
+        this.onAlwaysOnSite(this.targetCurrency);
+      } else if (this.onConvert) {
+        this.onConvert(this.targetCurrency);
+      }
+    });
+    offerActions.appendChild(btnOfferAlways);
+
+    const btnOfferDismiss = this.doc.createElement('button');
+    btnOfferDismiss.type = 'button';
+    btnOfferDismiss.className = 'cc-dismiss-btn cc-offer-dismiss';
+    btnOfferDismiss.setAttribute('title', 'Dismiss conversion offer for this session');
+    btnOfferDismiss.setAttribute('aria-label', 'Dismiss conversion offer');
+    btnOfferDismiss.appendChild(
+      createSvg(this.doc, 11, 11, '0 0 24 24', 2.2, [
+        { d: 'M18 6 6 18' },
+        { d: 'm6 6 12 12' }
+      ])
+    );
+    btnOfferDismiss.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.onDismissOffer) {
+        this.onDismissOffer();
+      }
+      this.dismiss();
+    });
+    offerActions.appendChild(btnOfferDismiss);
+
+    offerRow.appendChild(offerActions);
+    island.appendChild(offerRow);
+
+    // 1. Compact Row (Always visible in converted capsule)
     const compact = this.doc.createElement('div');
     compact.className = 'cc-island-compact';
 
@@ -1087,6 +1280,8 @@ export class InPageUI {
         this._closePopover();
         this.selectButton?.focus();
       } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        e.stopPropagation();
         const first = list.querySelector('.cc-popover-item');
         if (first) first.focus();
       }
@@ -1096,6 +1291,23 @@ export class InPageUI {
       if (e.key === 'Escape') {
         this._closePopover();
         this.selectButton?.focus();
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        const items = Array.from(list.querySelectorAll('.cc-popover-item'));
+        if (items.length === 0) return;
+        const active = this.shadowRoot?.activeElement;
+        const idx = items.indexOf(active);
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const next = idx < 0 ? items[0] : items[(idx + 1) % items.length];
+          next?.focus();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (idx <= 0) {
+            searchInput.focus();
+          } else {
+            items[idx - 1]?.focus();
+          }
+        }
       }
     });
 
@@ -1107,6 +1319,7 @@ export class InPageUI {
     if (!this.popoverMenu) return;
     this.isMenuOpen = true;
     this._clearAutoCollapseTimer();
+    this.barElement?.classList.add('cc-expanded');
     this.popoverMenu.classList.remove('cc-exiting');
     this.popoverMenu.classList.add('cc-visible');
     this.selectButton?.setAttribute('aria-expanded', 'true');
@@ -1122,6 +1335,7 @@ export class InPageUI {
   _closePopover() {
     if (!this.popoverMenu) return;
     this.isMenuOpen = false;
+    this.barElement?.classList.remove('cc-expanded');
     this.selectButton?.setAttribute('aria-expanded', 'false');
     const wasVisible = this.popoverMenu.classList.contains('cc-visible');
     this.popoverMenu.classList.remove('cc-visible');
@@ -1168,8 +1382,8 @@ export class InPageUI {
     const mini = this.doc.createElement('button');
     mini.className = 'cc-collapsed-pill cc-bar-collapsed';
     mini.setAttribute('type', 'button');
-    mini.setAttribute('title', 'Click to expand Currency Convertr Dynamic Island');
-    mini.setAttribute('aria-label', 'Expand Currency Convertr Dynamic Island');
+    mini.setAttribute('title', 'Click to expand Canji Dynamic Island');
+    mini.setAttribute('aria-label', 'Expand Canji Dynamic Island');
     mini.style.display = 'none';
 
     const dot = this.doc.createElement('span');
@@ -1181,7 +1395,12 @@ export class InPageUI {
     label.textContent = `${this.convertedCount !== undefined ? this.convertedCount : 0} ${this.targetCurrency}`;
     mini.appendChild(label);
 
-    mini.addEventListener('click', () => {
+    mini.addEventListener('click', (e) => {
+      if (this.hasMovedDrag) {
+        this.hasMovedDrag = false;
+        e.preventDefault();
+        return;
+      }
       this.toggleCollapse();
     });
 
@@ -1198,7 +1417,7 @@ export class InPageUI {
 
     this.barElement.addEventListener('pointerleave', () => {
       this.isHovered = false;
-      if (this.autoCollapse && this.isConverted && !this.isMenuOpen) {
+      if (this.autoCollapse && this.isConverted && this.mode !== 'offer' && !this.isMenuOpen) {
         this.scheduleAutoCollapse();
       }
     });
@@ -1213,7 +1432,7 @@ export class InPageUI {
         return;
       }
       this.isHovered = false;
-      if (this.autoCollapse && this.isConverted && !this.isMenuOpen) {
+      if (this.autoCollapse && this.isConverted && this.mode !== 'offer' && !this.isMenuOpen) {
         this.scheduleAutoCollapse();
       }
     });
@@ -1228,18 +1447,18 @@ export class InPageUI {
     };
     this.doc.addEventListener('pointerdown', this._onDocPointerDown);
 
-    if (this.autoCollapse && this.isConverted && !this.isCollapsed) {
+    if (this.autoCollapse && this.isConverted && this.mode !== 'offer' && !this.isCollapsed) {
       this.scheduleAutoCollapse();
     }
   }
 
   scheduleAutoCollapse(delay = 3500) {
     this._clearAutoCollapseTimer();
-    if (this.isDismissedForSession || this.isCollapsed || this.isHovered || this.isMenuOpen || this.isDragging) {
+    if (this.mode === 'offer' || this.isDismissedForSession || this.isCollapsed || this.isHovered || this.isMenuOpen || this.isDragging) {
       return;
     }
     this.autoCollapseTimer = setTimeout(() => {
-      if (!this.isHovered && !this.isMenuOpen && !this.isDragging && !this.isDismissedForSession) {
+      if (this.mode !== 'offer' && !this.isHovered && !this.isMenuOpen && !this.isDragging && !this.isDismissedForSession) {
         this.toggleCollapse(true);
       }
     }, delay);
@@ -1382,7 +1601,12 @@ export class InPageUI {
     }
   }
 
-  update({ isConverted, targetCurrency, sourceCurrency, count, rateDate, provider, theme, showCrypto } = {}) {
+  update({ mode, isConverted, targetCurrency, sourceCurrency, count, rateDate, provider, theme, showCrypto } = {}) {
+    if (mode !== undefined) {
+      this.mode = mode === 'offer' ? 'offer' : 'converted';
+    } else if (isConverted === true && this.mode === 'offer') {
+      this.mode = 'converted';
+    }
     if (isConverted !== undefined) this.isConverted = Boolean(isConverted);
     if (targetCurrency !== undefined) this.targetCurrency = targetCurrency;
     if (sourceCurrency !== undefined) this.sourceCurrency = sourceCurrency;
@@ -1402,7 +1626,10 @@ export class InPageUI {
 
     if (!this.barElement) return;
 
-    const dot = this.barElement.querySelector('.cc-status-dot');
+    this.barElement.classList.toggle('cc-mode-offer', this.mode === 'offer');
+
+    const offerTextEl = this.barElement.querySelector('.cc-offer-text');
+    const dot = this.barElement.querySelector('.cc-island-compact .cc-status-dot');
     const btnOriginal = this.barElement.querySelector('.cc-segment-original');
     const btnConverted = this.barElement.querySelector('.cc-segment-converted');
     const codeSpan = this.barElement.querySelector('.cc-currency-code');
@@ -1411,6 +1638,9 @@ export class InPageUI {
     const select = this.barElement.querySelector('.cc-select');
     const miniLabel = this.collapsedElement?.querySelector('.cc-mini-label');
 
+    if (offerTextEl) {
+      offerTextEl.textContent = this._formatOfferText();
+    }
     if (dot) {
       dot.classList.toggle('cc-status-inactive', !this.isConverted);
     }
@@ -1485,9 +1715,18 @@ export class InPageUI {
     const subEl = this.tooltipElement.querySelector('.cc-tooltip-sub');
 
     const formattedOriginal = formatCurrency(originalAmount, originalCurrency);
-    titleEl.textContent = `Original: ${formattedOriginal}`;
+    const formattedConverted =
+      convertedAmount !== undefined && convertedAmount !== null
+        ? ` → ${formatCurrency(convertedAmount, this.targetCurrency)}`
+        : '';
+    titleEl.textContent = `Original: ${formattedOriginal}${formattedConverted}`;
 
-    const formattedUnitRate = rate ? `1 ${originalCurrency} = ${rate.toFixed(4)} ${this.targetCurrency}` : '';
+    const formatUnitRate = (r) => {
+      if (!r || !Number.isFinite(r)) return '';
+      if (r < 0.01 && r > 0) return Number(r.toPrecision(4)).toString();
+      return r.toFixed(4);
+    };
+    const formattedUnitRate = rate ? `1 ${originalCurrency} = ${formatUnitRate(rate)} ${this.targetCurrency}` : '';
     const dateStr = date ? ` · Rates: ${date}` : '';
     subEl.textContent = `${formattedUnitRate}${dateStr}`;
 
@@ -1512,8 +1751,18 @@ export class InPageUI {
     left = Math.min(Math.max(left, 10), winWidth - tooltipWidth - 10);
     top = Math.max(top, 8);
 
-    this.tooltipElement.style.left = `${Math.round(left)}px`;
-    this.tooltipElement.style.top = `${Math.round(top)}px`;
+    let offsetLeft = 0;
+    let offsetTop = 0;
+    if (this.barContainer && this.barContainer.getBoundingClientRect && this.barContainer.style.transform !== 'none') {
+      const cRect = this.barContainer.getBoundingClientRect();
+      if (cRect.left !== 0 || cRect.top !== 0) {
+        offsetLeft = cRect.left;
+        offsetTop = cRect.top;
+      }
+    }
+
+    this.tooltipElement.style.left = `${Math.round(left - offsetLeft)}px`;
+    this.tooltipElement.style.top = `${Math.round(top - offsetTop)}px`;
     this.tooltipElement.classList.toggle('flipped', isFlipped);
     this.tooltipElement.classList.add('visible');
     this.tooltipElement.setAttribute('aria-hidden', 'false');

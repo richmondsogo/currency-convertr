@@ -38,7 +38,7 @@ test('build: manifest structure and permissions for Chrome', () => {
 
   assert.equal(manifest.manifest_version, 3);
   assert.equal(manifest.version, '2.0.0');
-  assert.equal(manifest.name, 'Currency Convertr');
+  assert.equal(manifest.name, 'Canji');
   assert.equal(manifest.background.service_worker, 'background.js');
 
   const expectedPermissions = ['contextMenus', 'notifications', 'storage', 'activeTab', 'scripting', 'tabs'];
@@ -67,10 +67,10 @@ test('build: manifest structure and permissions for Firefox', () => {
 
   assert.equal(manifest.manifest_version, 3);
   assert.equal(manifest.version, '2.0.0');
-  assert.equal(manifest.name, 'Currency Convertr');
+  assert.equal(manifest.name, 'Canji');
   assert.deepEqual(manifest.background.scripts, ['background.js']);
   assert.ok(manifest.browser_specific_settings && manifest.browser_specific_settings.gecko);
-  assert.equal(manifest.browser_specific_settings.gecko.id, 'currency-converter-fx@richmond.addons');
+  assert.equal(manifest.browser_specific_settings.gecko.id, 'canji@richmond.addons');
 
   const expectedPermissions = ['contextMenus', 'notifications', 'storage', 'activeTab', 'scripting', 'tabs'];
   assert.deepEqual(manifest.permissions.sort(), expectedPermissions.sort());
@@ -90,8 +90,8 @@ test('build: manifest structure and permissions for Firefox', () => {
 });
 
 test('build: zip packages exist and contain manifest.json at root', () => {
-  const chromeZip = path.join(packagesDir, 'currency-converter-chrome-v2.0.0.zip');
-  const firefoxZip = path.join(packagesDir, 'currency-converter-firefox-v2.0.0.zip');
+  const chromeZip = path.join(packagesDir, 'canji-chrome-v2.0.0.zip');
+  const firefoxZip = path.join(packagesDir, 'canji-firefox-v2.0.0.zip');
 
   assert.ok(fs.existsSync(chromeZip), 'Chrome zip package must exist');
   assert.ok(fs.existsSync(firefoxZip), 'Firefox zip package must exist');

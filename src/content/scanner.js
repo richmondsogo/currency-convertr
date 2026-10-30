@@ -55,6 +55,11 @@ export class PageScanner {
   }
 
   _initializePageContext() {
+    if (this.context.siteOverride) {
+      const override = this.context.siteOverride.toUpperCase();
+      this.detectedCurrencies.add(override);
+      this.primarySourceCurrency = override;
+    }
     if (!this.doc) return;
 
     // Fast cached helper for page native currency
@@ -137,6 +142,73 @@ export class PageScanner {
       }
     }
     return roots;
+  }
+
+  /**
+   * Read-only dry-run scan that counts convertible foreign prices without mutating the DOM.
+   * Used by Ask Mode ('offer' state) to decide whether to show the Dynamic Island prompt.
+   */
+  scanCandidates(rootNode = null) {
+    if (!this.doc || !this.doc.body) {
+      return { count: 0, primaryCurrency: null, targetCurrency: this.targetCurrency };
+    }
+    const initialRoot = rootNode || this.doc.body;
+    const roots = this._findAllRoots(initialRoot);
+    const targetISO = this.targetCurrency ? this.targetCurrency.toUpperCase() : 'USD';
+    let count = 0;
+    const currencyTally = new Map();
+
+    const recordCurrency = (iso) => {
+      if (!iso) return;
+      const code = iso.toUpperCase();
+      currencyTally.set(code, (currencyTally.get(code) || 0) + 1);
+    };
+
+    for (const root of roots) {
+      const splitContainers = this._findSplitPriceElements(root);
+      for (const el of splitContainers) {
+        const rawText = (el.textContent || '').trim();
+        const prices = extractPrices(rawText, this.context);
+        if (prices.length === 1) {
+          const sourceISO = prices[0].currency ? prices[0].currency.toUpperCase() : null;
+          if (sourceISO && sourceISO !== targetISO) {
+            count++;
+            recordCurrency(sourceISO);
+          }
+        }
+      }
+
+      const textNodes = this._collectTextNodes(root);
+      for (const textNode of textNodes) {
+        const originalText = textNode.nodeValue;
+        if (!originalText || !/\d/.test(originalText)) continue;
+        const prices = extractPrices(originalText, this.context);
+        for (const p of prices) {
+          const sourceISO = p.currency ? p.currency.toUpperCase() : null;
+          if (sourceISO && sourceISO !== targetISO) {
+            count++;
+            recordCurrency(sourceISO);
+          }
+        }
+      }
+    }
+
+    let primaryCurrency = this.context.siteOverride ? this.context.siteOverride.toUpperCase() : null;
+    if (!primaryCurrency && currencyTally.size > 0) {
+      let maxCount = -1;
+      for (const [iso, c] of currencyTally.entries()) {
+        if (c > maxCount) {
+          maxCount = c;
+          primaryCurrency = iso;
+        }
+      }
+    }
+
+    return {
+      count,
+      primaryCurrency: primaryCurrency || this.primarySourceCurrency || null,
+      targetCurrency: targetISO
+    };
   }
 
   /**
@@ -463,6 +535,37 @@ export class PageScanner {
 
     textNode.nodeValue = modifiedText;
     return true;
+  }
+
+  /**
+   * Resolves conversion metadata and anchor element for hover tooltips across both
+   * wrapped/split elements ([data-cc-converted]) and in-place converted Text nodes.
+   */
+  getHoverMetadata(target) {
+    if (!target || target.nodeType !== 1) return null;
+
+    if (target.closest) {
+      const convertedEl = target.closest('[data-cc-converted]');
+      if (convertedEl && this.conversionMetadata.has(convertedEl)) {
+        return {
+          element: convertedEl,
+          meta: this.conversionMetadata.get(convertedEl)
+        };
+      }
+    }
+
+    if (target.childNodes) {
+      for (const child of target.childNodes) {
+        if (child.nodeType === 3 && this.conversionMetadata.has(child)) {
+          return {
+            element: target,
+            meta: this.conversionMetadata.get(child)
+          };
+        }
+      }
+    }
+
+    return null;
   }
 
   /**

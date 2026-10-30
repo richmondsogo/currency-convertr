@@ -98,7 +98,7 @@ export async function buildGallery() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Currency Convertr — UI Foundation Gallery</title>
+  <title>Canji — UI Foundation Gallery</title>
   <link rel="stylesheet" href="./gallery.css">
 </head>
 <body class="bg-background text-foreground antialiased min-h-screen">
@@ -128,7 +128,7 @@ export async function buildExtension() {
     path.join(firefoxDir, 'options')
   ].forEach(dir => fs.mkdirSync(dir, { recursive: true }));
 
-  console.log(`[Build] Bundling Currency Convertr v${VERSION} (${gitSha}) with esbuild...`);
+  console.log(`[Build] Bundling Canji v${VERSION} (${gitSha}) with esbuild...`);
 
   // 1. Bundle vanilla scripts with esbuild for Chrome and Firefox
   const vanillaEntryPoints = {
@@ -258,7 +258,7 @@ export async function buildExtension() {
 
   // 4. Copy static files (HTML, CSS, Icons)
   function copyStaticFiles(targetDir) {
-    const iconSizes = [16, 48, 96, 128];
+    const iconSizes = [16, 32, 48, 128];
     iconSizes.forEach(size => {
       const src = path.join(srcDir, 'icons', `icon${size}.png`);
       if (fs.existsSync(src)) {
@@ -285,9 +285,10 @@ export async function buildExtension() {
   // 3. Manifest for Chrome (Manifest V3 with service_worker and version_name build stamp)
   const commonManifest = {
     manifest_version: 3,
-    name: "Currency Convertr",
+    name: "Canji",
+    short_name: "Canji",
     version: VERSION,
-    description: "In-page price converter that transforms prices into your preferred currency with live exchange rates.",
+    description: "Prices, in your currency. Instant in-page currency converter with live exchange rates.",
     permissions: [
       "contextMenus",
       "notifications",
@@ -301,14 +302,17 @@ export async function buildExtension() {
     ],
     icons: {
       "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
       "48": "icons/icon48.png",
-      "96": "icons/icon96.png",
+
       "128": "icons/icon128.png"
     },
     action: {
+      default_title: "Canji — Prices, in your currency",
       default_popup: "popup/popup.html",
       default_icon: {
         "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
         "48": "icons/icon48.png",
         "128": "icons/icon128.png"
       }
@@ -342,7 +346,7 @@ export async function buildExtension() {
     ...commonManifest,
     browser_specific_settings: {
       gecko: {
-        id: "currency-converter-fx@richmond.addons",
+        id: "canji@richmond.addons",
         strict_min_version: "140.0",
         data_collection_permissions: {
           required: ["none"]
@@ -368,8 +372,8 @@ export async function buildExtension() {
     console.log(`[Build] Created package: ${zipPath}`);
   }
 
-  const chromeZip = path.join(packagesDir, `currency-converter-chrome-v${VERSION}.zip`);
-  const firefoxZip = path.join(packagesDir, `currency-converter-firefox-v${VERSION}.zip`);
+  const chromeZip = path.join(packagesDir, `canji-chrome-v${VERSION}.zip`);
+  const firefoxZip = path.join(packagesDir, `canji-firefox-v${VERSION}.zip`);
 
   try {
     createZip(chromeDir, chromeZip);

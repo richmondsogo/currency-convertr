@@ -1,5 +1,5 @@
 // src/shared/theme.js
-// Unified theme management for Currency Convertr across Chrome and Firefox.
+// Unified theme management for Canji across Chrome and Firefox.
 // Enforces symmetrical .dark / .light class management, data-theme attribute,
 // native color-scheme styling, and localStorage synchronization for theme-boot.js.
 

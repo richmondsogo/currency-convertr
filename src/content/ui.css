@@ -512,6 +512,77 @@
   outline-offset: 1px;
 }
 
+/* Ask Mode Offer Prompt Row inside Dynamic Island */
+.cc-offer-row {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.cc-dynamic-island.cc-mode-offer .cc-offer-row {
+  display: flex;
+}
+
+.cc-dynamic-island.cc-mode-offer .cc-island-compact,
+.cc-dynamic-island.cc-mode-offer .cc-island-expandable {
+  display: none;
+}
+
+.cc-offer-text {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--cc-text);
+  letter-spacing: -0.01em;
+}
+
+.cc-offer-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 2px;
+}
+
+.cc-offer-btn {
+  border-radius: 9999px;
+  padding: 2px 9px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: transform 120ms ease, opacity 120ms ease, border-color 140ms ease;
+}
+
+.cc-offer-btn:active {
+  transform: scale(0.97);
+}
+
+.cc-offer-btn:focus-visible {
+  outline: 2px solid var(--cc-accent);
+  outline-offset: 2px;
+}
+
+.cc-offer-btn-primary {
+  background: var(--cc-accent);
+  color: var(--cc-accent-fg);
+  border: 1px solid transparent;
+}
+
+.cc-offer-btn-primary:hover {
+  opacity: 0.92;
+}
+
+.cc-offer-btn-secondary {
+  background: var(--cc-raised);
+  color: var(--cc-text);
+  border: 1px solid var(--cc-hairline);
+}
+
+.cc-offer-btn-secondary:hover {
+  border-color: var(--cc-muted);
+}
+
 /* Collapsed Mini Pill */
 .cc-collapsed-pill {
   display: none;
@@ -557,6 +628,7 @@
   box-shadow: var(--cc-shadow);
   pointer-events: none;
   z-index: 2147483647;
+  width: max-content;
   max-width: 280px;
   opacity: 0;
   transform: translateY(4px);
@@ -596,6 +668,12 @@
   bottom: -4px;
   left: 50%;
   margin-left: -3px;
+}
+
+.cc-tooltip.flipped .cc-tooltip-caret {
+  bottom: auto;
+  top: -4px;
+  transform: rotate(225deg);
 }
 
 /* 3. Accessibility: transparency, contrast and motion preferences */

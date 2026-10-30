@@ -213,6 +213,8 @@ test('ui: Dynamic Island pill maintains single-capsule horizontal expansion arch
   const compact = island.querySelector('.cc-island-compact');
   const expandable = island.querySelector('.cc-island-expandable');
   assert.ok(compact, 'Must contain .cc-island-compact');
+  assert.ok(compact.querySelector('svg.cc-brand-mark'), 'Must contain Canji small-cut SVG mark in compact capsule');
+  assert.ok(ui.collapsedElement.querySelector('svg.cc-brand-mark'), 'Must contain Canji small-cut SVG mark in collapsed mini-pill');
   assert.ok(expandable, 'Must contain .cc-island-expandable inside the single capsule');
   assert.strictEqual(expandable.parentElement, island, 'Expandable row must be a direct child of the single island capsule');
 
@@ -326,3 +328,65 @@ test('ui: InPageUI respects showCrypto option and dynamic updates', () => {
   ui.unmount();
 });
 
+
+test('ui: Dynamic Island stays expanded (.cc-expanded) while popover menu is open, supports ArrowDown/ArrowUp navigation, suppresses click after dragging collapsed pill, and formats sub-cent tooltip rates cleanly', async () => {
+  const { INLINE_UI_CSS, InPageUI } = await import('../src/content/ui.js');
+  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+  const doc = dom.window.document;
+
+  const ui = new InPageUI({
+    doc,
+    targetCurrency: 'USD',
+    isConverted: true,
+    convertedCount: 3
+  });
+  ui.mount();
+
+  const selectBtn = ui.barElement.querySelector('.cc-select');
+  selectBtn.click();
+  assert.ok(ui.barElement.classList.contains('cc-expanded'), 'Opening popover must add .cc-expanded to .cc-dynamic-island');
+
+  const items = Array.from(ui.popoverMenu.querySelectorAll('.cc-popover-item'));
+  assert.ok(items.length >= 2);
+  items[0].focus();
+  assert.equal(ui.shadowRoot.activeElement, items[0]);
+
+  items[0].dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+  assert.equal(ui.shadowRoot.activeElement, items[1], 'ArrowDown on item[0] must focus item[1]');
+
+  items[1].dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+  assert.equal(ui.shadowRoot.activeElement, items[0], 'ArrowUp on item[1] must focus item[0]');
+
+  items[0].dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+  assert.equal(ui.shadowRoot.activeElement, ui.popoverSearch, 'ArrowUp on item[0] must return focus to search input');
+
+  ui._closePopover();
+  assert.ok(!ui.barElement.classList.contains('cc-expanded'), 'Closing popover must remove .cc-expanded from .cc-dynamic-island');
+
+  // Collapse pill and simulate a drag followed by click
+  ui.toggleCollapse(true);
+  assert.equal(ui.isCollapsed, true);
+  ui.hasMovedDrag = true;
+  ui.collapsedElement.click();
+  assert.equal(ui.isCollapsed, true, 'Click immediately after dragging collapsed pill must NOT expand it');
+
+  // Subsequent normal click expands it
+  ui.collapsedElement.click();
+  assert.equal(ui.isCollapsed, false, 'Normal click on collapsed pill expands it');
+
+  // Sub-cent tooltip rate formatting & flipped caret CSS
+  ui.showTooltip({
+    originalAmount: 15000,
+    originalCurrency: 'NGN',
+    convertedAmount: 9.09,
+    rate: 0.00060606,
+    date: '2026-10-30',
+    x: 100,
+    y: 100
+  });
+  const subText = ui.tooltipElement.querySelector('.cc-tooltip-sub').textContent;
+  assert.ok(subText.includes('0.0006061'), `Expected significant precision for sub-cent rate, got: ${subText}`);
+  assert.match(INLINE_UI_CSS, /\.cc-tooltip\.flipped\s+\.cc-tooltip-caret/, 'INLINE_UI_CSS must style .cc-tooltip.flipped .cc-tooltip-caret');
+
+  ui.unmount();
+});

@@ -15,6 +15,7 @@ let globalRates = null;
 let rateDate = null;
 let rateProvider = null;
 let currentSettings = null;
+let cachedSettings = null;
 // Theme and crypto settings for the in-page pill. Loaded on demand so the
 // first paint already matches the user's choice (currentSettings is only populated by live
 // storage changes and must not silently alter conversion fallbacks).
@@ -40,13 +41,14 @@ function resolvePillCrypto() {
  * on failure or timeout the pill falls back to defaults.
  */
 async function ensurePillSettings() {
-  if ((currentSettings?.theme || pillThemeSetting) && (currentSettings?.showCrypto !== undefined || pillCryptoSetting !== null)) return;
+  if (cachedSettings && (currentSettings?.theme || pillThemeSetting) && (currentSettings?.showCrypto !== undefined || pillCryptoSetting !== null)) return;
   try {
     const settings = await Promise.race([
       sendMessage({ type: MSG.GET_SETTINGS }),
       new Promise((resolve) => setTimeout(() => resolve(null), THEME_LOAD_TIMEOUT_MS))
     ]);
     if (settings) {
+      cachedSettings = settings;
       if (typeof settings.theme === 'string') {
         pillThemeSetting = settings.theme;
       }
@@ -108,13 +110,26 @@ function ensureHighlightStyles(doc = document) {
 }
 
 async function performConversion(options = {}) {
-  const targetCurrency = options.targetCurrency || currentSettings?.targetCurrency || 'USD';
-  const displayMode = options.displayMode || currentSettings?.displayMode || 'replace';
+  if (!currentSettings && !cachedSettings) {
+    await ensurePillSettings();
+  }
+  const settingsSource = currentSettings || cachedSettings;
+  const targetCurrency = options.targetCurrency || settingsSource?.targetCurrency || 'USD';
+  const displayMode = options.displayMode || settingsSource?.displayMode || 'replace';
   if (displayMode === 'replace_highlight') {
     ensureHighlightStyles(document);
   }
-  const roundWhole = options.roundWhole !== undefined ? options.roundWhole : (currentSettings?.roundWhole || false);
-  const showInPageBar = options.showInPageBar !== undefined ? options.showInPageBar : (currentSettings?.showInPageBar !== false);
+  const roundWhole = options.roundWhole !== undefined ? options.roundWhole : (settingsSource?.roundWhole || false);
+  const showInPageBar = options.showInPageBar !== undefined ? options.showInPageBar : (settingsSource?.showInPageBar !== false);
+  const hostname = (typeof window !== 'undefined' && window.location?.hostname)
+    ? window.location.hostname.replace(/^www\./, '').toLowerCase()
+    : '';
+  const siteOverride = options.siteOverride !== undefined
+    ? options.siteOverride
+    : (settingsSource?.perSite?.[hostname]?.assumedCurrency ?? currentScanner?.context?.siteOverride ?? null);
+  const ambiguousDollarSetting = options.ambiguousDollarSetting !== undefined
+    ? options.ambiguousDollarSetting
+    : (settingsSource?.ambiguousDollar ?? currentScanner?.context?.ambiguousDollarSetting ?? 'USD');
 
   // Fetch rates if not cached in memory
   if (options.ratesTable) {
@@ -145,9 +160,17 @@ async function performConversion(options = {}) {
     return { success: false, error: 'Rates unavailable' };
   }
 
-  // If already converted to a different target currency, revert first
-  if (!currentScanner || currentScanner.targetCurrency !== targetCurrency.toUpperCase()) {
-    if (currentScanner && isConverted) {
+  // Recreate scanner if target currency, display mode, rounding, or currency disambiguation context changed
+  const scannerNeedsRecreate =
+    !currentScanner ||
+    currentScanner.targetCurrency !== targetCurrency.toUpperCase() ||
+    currentScanner.displayMode !== displayMode ||
+    Boolean(currentScanner.roundWhole) !== Boolean(roundWhole) ||
+    (currentScanner.context?.siteOverride || null) !== (siteOverride || null) ||
+    (currentScanner.context?.ambiguousDollarSetting || 'USD') !== (ambiguousDollarSetting || 'USD');
+
+  if (scannerNeedsRecreate) {
+    if (currentScanner) {
       currentScanner.revert();
     }
 
@@ -157,6 +180,10 @@ async function performConversion(options = {}) {
       ratesTable: globalRates,
       displayMode,
       roundWhole,
+      context: {
+        siteOverride: siteOverride || null,
+        ambiguousDollarSetting: ambiguousDollarSetting || 'USD'
+      },
       rateDate,
       provider: rateProvider,
       onConvertedCountChange: (count) => {
@@ -169,7 +196,7 @@ async function performConversion(options = {}) {
 
     currentScanner.convert();
   } else {
-    // Same target currency: scan incrementally for newly added elements
+    // Same configuration: scan incrementally for newly added elements or after revert
     currentScanner.convert();
   }
 
@@ -192,8 +219,12 @@ async function performConversion(options = {}) {
     if (!currentUI) await ensurePillSettings();
     const effectiveCrypto = resolvePillCrypto();
     if (!currentUI) {
+      const host = (typeof window !== 'undefined' && window.location?.hostname)
+        ? window.location.hostname.replace(/^www\./, '').toLowerCase()
+        : '';
       currentUI = new InPageUI({
         doc: document,
+        mode: 'converted',
         targetCurrency,
         sourceCurrency: primarySourceCurrency,
         isConverted: true,
@@ -211,11 +242,26 @@ async function performConversion(options = {}) {
         },
         onChangeCurrency: (newCur) => {
           performConversion({ targetCurrency: newCur, manual: true });
+        },
+        onAcceptOffer: (cur) => {
+          performConversion({ targetCurrency: cur, manual: true });
+        },
+        onAlwaysOnSite: (cur) => {
+          if (host) {
+            sendMessage({ type: MSG.ACCEPT_ALWAYS_SITE, payload: { hostname: host } }).catch(() => {});
+          }
+          performConversion({ targetCurrency: cur, manual: true });
+        },
+        onDismissOffer: () => {
+          if (host) {
+            sendMessage({ type: MSG.DISMISS_OFFER, payload: { hostname: host } }).catch(() => {});
+          }
         }
       });
       currentUI.mount(uiCssText);
     } else {
       currentUI.update({
+        mode: 'converted',
         isConverted: true,
         targetCurrency,
         sourceCurrency: primarySourceCurrency,
@@ -272,10 +318,10 @@ function initContentScript() {
     const target = e.target;
     if (!target || target.nodeType !== 1) return;
 
-    const convertedEl = target.closest('[data-cc-converted]');
-    if (!convertedEl) return;
+    const hoverHit = currentScanner.getHoverMetadata(target);
+    if (!hoverHit) return;
 
-    const meta = currentScanner.conversionMetadata.get(convertedEl);
+    const { element: anchorEl, meta } = hoverHit;
     if (meta) {
       currentUI.showTooltip({
         originalAmount: meta.originalAmount,
@@ -283,7 +329,7 @@ function initContentScript() {
         convertedAmount: meta.convertedAmount,
         rate: meta.rate,
         date: meta.date,
-        targetElement: convertedEl,
+        targetElement: anchorEl,
         x: e.clientX,
         y: e.clientY
       });
@@ -291,11 +337,11 @@ function initContentScript() {
   }, { passive: true });
 
   document.addEventListener('mouseout', (e) => {
-    if (!isConverted || !currentUI) return;
+    if (!isConverted || !currentScanner || !currentUI) return;
     const target = e.target;
     if (!target || target.nodeType !== 1) return;
 
-    if (target.closest('[data-cc-converted]')) {
+    if (currentScanner.getHoverMetadata(target)) {
       currentUI.hideTooltip();
     }
   }, { passive: true });
@@ -335,8 +381,11 @@ function initContentScript() {
   if (api && api.storage && api.storage.onChanged) {
     api.storage.onChanged.addListener((changes, area) => {
       if ((area === 'local' || area === 'sync') && changes[SETTINGS_STORAGE_KEY]) {
-        currentSettings = changes[SETTINGS_STORAGE_KEY].newValue || currentSettings;
-        if (currentUI && currentSettings) {
+        const nextSettings = changes[SETTINGS_STORAGE_KEY].newValue;
+        if (!nextSettings) return;
+        currentSettings = nextSettings;
+        cachedSettings = nextSettings;
+        if (currentUI) {
           if (currentSettings.theme) {
             pillThemeSetting = currentSettings.theme;
           }
@@ -347,6 +396,27 @@ function initContentScript() {
             theme: currentSettings.theme,
             showCrypto: currentSettings.showCrypto
           });
+        }
+        if (isConverted && currentScanner) {
+          const host = (typeof window !== 'undefined' && window.location?.hostname)
+            ? window.location.hostname.replace(/^www\./, '').toLowerCase()
+            : '';
+          const nextSiteOverride = (host && nextSettings.perSite?.[host]?.assumedCurrency) || null;
+          const nextAmbiguous = nextSettings.ambiguousDollar || 'USD';
+          const configChanged =
+            (nextSettings.displayMode && nextSettings.displayMode !== currentScanner.displayMode) ||
+            (typeof nextSettings.roundWhole === 'boolean' && nextSettings.roundWhole !== Boolean(currentScanner.roundWhole)) ||
+            nextSiteOverride !== (currentScanner.context?.siteOverride || null) ||
+            nextAmbiguous !== (currentScanner.context?.ambiguousDollarSetting || 'USD');
+          if (configChanged) {
+            void performConversion({
+              targetCurrency: currentScanner.targetCurrency,
+              displayMode: nextSettings.displayMode,
+              roundWhole: nextSettings.roundWhole,
+              siteOverride: nextSiteOverride,
+              ambiguousDollarSetting: nextAmbiguous
+            });
+          }
         }
       }
     });

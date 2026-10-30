@@ -66,6 +66,13 @@ async function run() {
 
     await storePage.waitForTimeout(800);
 
+    // Expand Dynamic Island capsule so full controls are showcased
+    await storePage.evaluate(() => {
+      const host = document.getElementById('cc-dynamic-island-host');
+      const island = host?.shadowRoot?.querySelector('.cc-dynamic-island');
+      if (island) island.classList.add('cc-expanded');
+    });
+
     // Hover over the first converted price to show the tooltip
     const priceEl = storePage.locator('.price-main').first();
     if (await priceEl.count() > 0) {
@@ -78,8 +85,45 @@ async function run() {
     });
     console.log('[Screenshots] Saved screenshot-inpage-bar.png');
 
+    // Hide the price tooltip before compositing popup screenshots
+    await storePage.evaluate(() => {
+      const host = document.getElementById('cc-dynamic-island-host');
+      const tip = host?.shadowRoot?.querySelector('.cc-tooltip');
+      if (tip) tip.classList.remove('visible');
+    });
+
+    // Helper to composite a 360x560 popup PNG buffer onto the 1280x800 storePage
+    async function savePopupCompositeOnStore(popupBuffer, filename) {
+      const base64 = popupBuffer.toString('base64');
+      await storePage.evaluate((dataUrl) => {
+        let frame = document.getElementById('cc-cws-popup-composite');
+        if (!frame) {
+          frame = document.createElement('img');
+          frame.id = 'cc-cws-popup-composite';
+          frame.style.position = 'fixed';
+          frame.style.top = '16px';
+          frame.style.right = '24px';
+          frame.style.width = '360px';
+          frame.style.height = 'auto';
+          frame.style.borderRadius = '12px';
+          frame.style.border = '1px solid #E2DED4';
+          frame.style.boxShadow = '0 20px 48px rgba(25, 24, 21, 0.22), 0 4px 12px rgba(25, 24, 21, 0.08)';
+          frame.style.zIndex = '2147483647';
+          document.body.appendChild(frame);
+        }
+        frame.src = `data:image/png;base64,${dataUrl}`;
+      }, base64);
+      await storePage.waitForTimeout(200);
+      await storePage.screenshot({
+        path: path.join(outDir, filename)
+      });
+      await storePage.evaluate(() => {
+        document.getElementById('cc-cws-popup-composite')?.remove();
+      });
+    }
+
     // -------------------------------------------------------------------------
-    // 2. Action Popup (screenshot-popup.png)
+    // 2. Action Popup (screenshot-popup.png — 1280x800 CWS compliant)
     // -------------------------------------------------------------------------
     console.log('[Screenshots] 2. Capturing Toolbar Action Popup...');
     const popupPage = await context.newPage();
@@ -89,14 +133,12 @@ async function run() {
     await popupPage.waitForLoadState('domcontentloaded');
     await popupPage.waitForTimeout(800);
 
-    // Light Theme
-    await popupPage.screenshot({
-      path: path.join(outDir, 'screenshot-popup.png')
-    });
+    const popupBuf = await popupPage.screenshot();
+    await savePopupCompositeOnStore(popupBuf, 'screenshot-popup.png');
     console.log('[Screenshots] Saved screenshot-popup.png');
 
     // -------------------------------------------------------------------------
-    // 3. Searchable Combobox (screenshot-combobox.png)
+    // 3. Searchable Combobox (screenshot-combobox.png — 1280x800 CWS compliant)
     // -------------------------------------------------------------------------
     console.log('[Screenshots] 3. Capturing Searchable Currency Combobox...');
     const pickerBtn = popupPage.locator('#picker-to-btn');
@@ -111,17 +153,16 @@ async function run() {
       }
     }
 
-    await popupPage.screenshot({
-      path: path.join(outDir, 'screenshot-combobox.png')
-    });
+    const comboboxBuf = await popupPage.screenshot();
+    await savePopupCompositeOnStore(comboboxBuf, 'screenshot-combobox.png');
     console.log('[Screenshots] Saved screenshot-combobox.png');
 
     // -------------------------------------------------------------------------
-    // 4. Options Dashboard (screenshot-options.png)
+    // 4. Options Dashboard (screenshot-options.png — 1280x800 CWS compliant)
     // -------------------------------------------------------------------------
     console.log('[Screenshots] 4. Capturing Options Dashboard...');
     const optionsPage = await context.newPage();
-    await optionsPage.setViewportSize({ width: 1280, height: 900 });
+    await optionsPage.setViewportSize({ width: 1280, height: 800 });
     const optionsUrl = `chrome-extension://${browser.extensionId}/options/options.html`;
     await optionsPage.goto(optionsUrl);
     await optionsPage.waitForLoadState('domcontentloaded');
@@ -133,11 +174,11 @@ async function run() {
     console.log('[Screenshots] Saved screenshot-options.png');
 
     // -------------------------------------------------------------------------
-    // 5. Context Menu Selection (real-work-test-context-menu.png)
+    // 5. Context Menu Selection (real-work-test-context-menu.png — 1280x800 CWS compliant)
     // -------------------------------------------------------------------------
     console.log('[Screenshots] 5. Capturing Context Menu Selection...');
     const contextPage = await context.newPage();
-    await contextPage.setViewportSize({ width: 1000, height: 600 });
+    await contextPage.setViewportSize({ width: 1280, height: 800 });
     await contextPage.goto('https://store.nordicliving.com/');
     await contextPage.waitForLoadState('domcontentloaded');
     await contextPage.waitForTimeout(500);
@@ -157,7 +198,7 @@ async function run() {
         menu.id = 'demo-context-menu';
         menu.style.position = 'fixed';
         menu.style.left = `${rect.right + 16}px`;
-        menu.style.top = `${rect.top - 20}px`;
+        menu.style.top = `${Math.min(rect.top - 20, window.innerHeight - 250)}px`;
         menu.style.background = '#FFFFFF';
         menu.style.border = '1px solid #E2DED4';
         menu.style.borderRadius = '8px';
@@ -258,28 +299,17 @@ async function run() {
     background: #1E6B52;
   }
   .icon-container {
-    width: 52px;
-    height: 52px;
-    background: #191815;
-    border-radius: 12px;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 14px rgba(25, 24, 21, 0.12);
-  }
-  .icon-glyph {
-    color: #F7F5F0;
-    font-weight: 700;
-    font-size: 24px;
-    letter-spacing: -0.04em;
-    line-height: 1;
-    transform: translateY(-1px);
+    margin-bottom: 10px;
   }
   .title {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     color: #191815;
     margin-bottom: 3px;
   }
@@ -342,10 +372,14 @@ async function run() {
 <body>
   <div class="accent-bar"></div>
   <div class="icon-container">
-    <span class="icon-glyph">fx</span>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="58" height="58">
+      <path fill="#191815" d="M35.68 73.40 L35.68 182.60 L130.25 237.20 L220.32 185.20 L220.32 174.80 L130.25 226.80 L44.68 177.40 L44.68 78.60 L130.25 29.20 L220.32 81.20 L220.32 70.80 L130.25 18.80Z"/>
+      <path fill="#191815" d="M96.93 91.08 L96.93 164.92 L160.87 201.84 L220.32 167.52 L220.32 157.12 L160.87 191.44 L105.93 159.72 L105.93 96.28 L160.87 64.56 L220.32 98.88 L220.32 88.48 L160.87 54.16Z"/>
+      <path fill="#1E6B52" d="M158.17 108.76 L158.17 147.24 L191.50 166.48 L220.32 149.84 L220.32 139.44 L191.50 156.08 L167.17 142.04 L167.17 113.96 L191.50 99.92 L220.32 116.56 L220.32 106.16 L191.50 89.52Z"/>
+    </svg>
   </div>
-  <h1 class="title">Currency Convertr</h1>
-  <p class="subtitle">Live In-Page Currency Translation</p>
+  <h1 class="title">canji</h1>
+  <p class="subtitle">Prices, in your currency</p>
   <div class="pill-preview">
     <span class="pill-dot"></span>
     <span class="pill-from">€249.00</span>

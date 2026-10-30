@@ -7,16 +7,20 @@ import { Badge } from "@/ui/components/ui/badge";
 import { Separator } from "@/ui/components/ui/separator";
 import { SiteModeControl } from "@/ui/components/SiteModeControl";
 import { CurrencyCombobox } from "@/ui/components/CurrencyCombobox";
+import { CanjiLockup } from "@/ui/components/CanjiLogo";
 import { getEffectiveSiteCaption } from "@/ui/lib/site-rules";
 import {
   Clock,
   Settings as SettingsIcon,
   AlertCircle,
   ArrowRight,
-  RotateCcw,
+  Calculator,
+  Copy,
   Check,
 } from "lucide-react";
 import { getAllCurrencies, getCurrencyMeta } from "../shared/currencies.js";
+import { calculateRate } from "../shared/rates.js";
+import { formatCurrency } from "../shared/format.js";
 import { MSG } from "../shared/messaging.js";
 import {
   sendMessage,
@@ -28,7 +32,6 @@ import {
   getBrowser,
 } from "../shared/browser.js";
 import {
-  getSiteMode,
   setSiteMode,
   normalizeHost,
   DEFAULT_SETTINGS,
@@ -37,7 +40,6 @@ import {
   classifyConversionError,
   getConversionErrorMessage,
   isRestrictedPage,
-  isRestrictedUrl,
 } from "./popup-errors.js";
 import { applyTheme, subscribeSystemTheme } from "../shared/theme.js";
 import { playTactileClick, playErrorChime } from "../shared/audio.js";
@@ -65,6 +67,11 @@ export function PopupApp() {
   const [pageTargetCurrency, setPageTargetCurrency] = useState("USD");
   const [isPageConverted, setIsPageConverted] = useState(false);
   const [converting, setConverting] = useState(false);
+
+  // Quick Scratchpad state
+  const [showScratchpad, setShowScratchpad] = useState(false);
+  const [scratchAmount, setScratchAmount] = useState("100");
+  const [scratchCopied, setScratchCopied] = useState(false);
 
   // Live status
   const [statusMessage, setStatusMessage] = useState("Ready to convert");
@@ -103,9 +110,6 @@ export function PopupApp() {
   // Initial load
   useEffect(() => {
     async function init() {
-      // Load independent extension state concurrently. Resolving the page target must
-      // not wait on a network-backed rates request: Firefox can keep that request in
-      // flight long enough for a user to click Convert before currentTab is set.
       const ratesP = loadRates();
       const settingsP = (async () => {
         try {
@@ -214,8 +218,6 @@ export function PopupApp() {
       }
 
       setLoading(false);
-      // The request intentionally continues in the background. The converter can use
-      // its result when ready or fetch it on demand when the user acts immediately.
       void ratesP;
     }
 
@@ -256,9 +258,7 @@ export function PopupApp() {
 
   // Handle conversion action
   const triggerConvert = useCallback(
-    async (targetCur) => {
-      // A toolbar popup can become interactive before its asynchronous initialization
-      // completes. Re-resolve the page instead of silently ignoring the click.
+    async (targetCur, siteOverrideArg) => {
       const activeTab = currentTab?.id ? currentTab : await getActiveTab();
       if (!activeTab?.id) {
         setStatusType("error");
@@ -288,6 +288,10 @@ export function PopupApp() {
         const activeHostname = hostname || new URL(activeTab.url).hostname.replace(/^www\./, "");
         const norm = normalizeHost(activeHostname);
         const siteRule = settings?.perSite && settings.perSite[norm];
+        const resolvedSiteOverride =
+          siteOverrideArg !== undefined
+            ? siteOverrideArg
+            : assumedCurrency || siteRule?.assumedCurrency || null;
 
         const convertPayload = {
           manual: true,
@@ -298,7 +302,8 @@ export function PopupApp() {
           displayMode: settings?.displayMode || "replace",
           roundWhole: settings?.roundWhole || false,
           showInPageBar: settings?.showInPageBar !== false,
-          siteOverride: assumedCurrency || siteRule?.assumedCurrency || null,
+          siteOverride: resolvedSiteOverride,
+          ambiguousDollarSetting: settings?.ambiguousDollar || "USD",
         };
 
         let response = null;
@@ -421,7 +426,6 @@ export function PopupApp() {
       }
     }
 
-    const norm = normalizeHost(hostname);
     const updatedPerSite = { ...(settings.perSite || {}) };
     setSiteMode({ perSite: updatedPerSite }, hostname, newMode);
     setSiteModeState(newMode);
@@ -439,7 +443,6 @@ export function PopupApp() {
 
   const handleResetSiteMode = async () => {
     if (!hostname || !settings) return;
-    const norm = normalizeHost(hostname);
     const updatedPerSite = { ...(settings.perSite || {}) };
     setSiteMode({ perSite: updatedPerSite }, hostname, null);
     setSiteModeState("");
@@ -461,11 +464,12 @@ export function PopupApp() {
     const norm = normalizeHost(hostname);
     const updatedPerSite = { ...(settings.perSite || {}) };
     if (!updatedPerSite[norm]) updatedPerSite[norm] = {};
+    const nextAssumed = currency || null;
     updatedPerSite[norm] = {
       ...updatedPerSite[norm],
-      assumedCurrency: currency || null,
+      assumedCurrency: nextAssumed,
     };
-    setAssumedCurrencyState(currency || null);
+    setAssumedCurrencyState(nextAssumed);
 
     try {
       await sendMessage({
@@ -473,6 +477,9 @@ export function PopupApp() {
         payload: { perSite: updatedPerSite },
       });
       setSettings((prev) => ({ ...prev, perSite: updatedPerSite }));
+      if (isPageConverted) {
+        await triggerConvert(pageTargetCurrency, nextAssumed);
+      }
     } catch (err) {
       console.warn("[Popup] Failed to update assumed currency:", err);
     }
@@ -495,6 +502,37 @@ export function PopupApp() {
     return getEffectiveSiteCaption(rule, autoConvertAll);
   }, [settings, hostname]);
 
+  // Scratchpad source currency (uses assumedCurrency if set, else EUR when target is USD, else USD)
+  const scratchSourceCurrency = useMemo(() => {
+    if (assumedCurrency && assumedCurrency !== pageTargetCurrency) {
+      return assumedCurrency;
+    }
+    return pageTargetCurrency === "USD" ? "EUR" : "USD";
+  }, [assumedCurrency, pageTargetCurrency]);
+
+  const scratchConvertedText = useMemo(() => {
+    const num = parseFloat(scratchAmount);
+    if (!Number.isFinite(num) || num < 0) return "—";
+    if (!ratesInfo?.rates) return "...";
+    try {
+      const rate = calculateRate(scratchSourceCurrency, pageTargetCurrency, ratesInfo.rates);
+      return formatCurrency(num * rate, pageTargetCurrency, {
+        roundWhole: Boolean(settings?.roundWhole),
+      });
+    } catch {
+      return "—";
+    }
+  }, [scratchAmount, scratchSourceCurrency, pageTargetCurrency, ratesInfo, settings?.roundWhole]);
+
+  const handleCopyScratch = async () => {
+    if (!scratchConvertedText || scratchConvertedText === "—") return;
+    try {
+      await navigator.clipboard.writeText(scratchConvertedText);
+      setScratchCopied(true);
+      setTimeout(() => setScratchCopied(false), 1200);
+    } catch {}
+  };
+
   // Rates text display
   const ratesFreshnessText = useMemo(() => {
     if (ratesLoading) return "Updating...";
@@ -506,35 +544,89 @@ export function PopupApp() {
   }, [ratesLoading, ratesError, ratesInfo]);
 
   return (
-    <div className="w-[360px] max-h-[560px] overflow-y-auto bg-background text-foreground font-sans p-4 flex flex-col gap-4 select-none selection:bg-accent/20">
-      {/* 1. Header */}
+    <div className="w-[360px] max-h-[580px] overflow-y-auto bg-background text-foreground font-sans p-4 flex flex-col gap-3.5 select-none selection:bg-accent/20">
+      {/* 1. Header with Canji Lockup + Quick Scratchpad Toggle + Settings */}
       <header className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span
-            className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-mono font-medium text-xs tracking-tight"
-            aria-hidden="true"
-          >
-            fx
-          </span>
-          <h1 className="font-semibold text-sm tracking-tight text-foreground">
-            Currency Convertr
-          </h1>
-        </div>
+        <CanjiLockup cut="small" symbolSize={20} wordmarkClassName="text-base" />
 
-        <Button
-          id="btn-open-options"
-          variant="ghost"
-          size="icon"
-          onClick={openOptionsPage}
-          title="Settings & Options"
-          aria-label="Open settings"
-          className="hit-target-44 h-7 w-7 text-muted-foreground hover:text-foreground rounded-md"
-        >
-          <SettingsIcon className="h-4 w-4" aria-hidden="true" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            id="btn-toggle-scratchpad"
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowScratchpad((v) => !v)}
+            title="Quick price scratchpad"
+            aria-label="Toggle quick price calculator"
+            aria-expanded={showScratchpad}
+            className={`hit-target-44 h-7 w-7 rounded-md transition-colors ${
+              showScratchpad
+                ? "bg-secondary text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Calculator className="h-4 w-4" aria-hidden="true" />
+          </Button>
+          <Button
+            id="btn-open-options"
+            variant="ghost"
+            size="icon"
+            onClick={openOptionsPage}
+            title="Settings & Options"
+            aria-label="Open settings"
+            className="hit-target-44 h-7 w-7 text-muted-foreground hover:text-foreground rounded-md"
+          >
+            <SettingsIcon className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
       </header>
 
-      {/* 2. Unsupported / Restricted Notice (flat, warning-tinted, no border) */}
+      {/* Optional Collapsible Quick Scratchpad Calculator */}
+      {showScratchpad && (
+        <section
+          aria-label="Quick price scratchpad"
+          className="rounded-lg bg-secondary/60 border border-border/80 p-2.5 space-y-2"
+        >
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Quick Scratchpad</span>
+            <span className="font-mono">
+              {scratchSourceCurrency} → {pageTargetCurrency}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-background border border-border rounded-md px-2.5 h-8 flex-1 min-w-0">
+              <span className="font-mono text-xs text-muted-foreground shrink-0">
+                {getCurrencyMeta(scratchSourceCurrency)?.symbol || scratchSourceCurrency}
+              </span>
+              <input
+                id="scratchpad-amount-input"
+                type="number"
+                min="0"
+                step="any"
+                value={scratchAmount}
+                onChange={(e) => setScratchAmount(e.target.value)}
+                aria-label={`Amount in ${scratchSourceCurrency}`}
+                className="w-full bg-transparent font-mono text-xs font-medium text-foreground focus:outline-none"
+              />
+            </div>
+            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+            <button
+              type="button"
+              onClick={handleCopyScratch}
+              title="Click to copy converted amount"
+              className="h-8 px-2.5 rounded-md bg-accent/15 text-foreground border border-accent/30 font-mono text-xs font-medium inline-flex items-center gap-1.5 hover:bg-accent/25 transition-colors shrink-0"
+            >
+              <span>{scratchCopied ? "Copied" : scratchConvertedText}</span>
+              {scratchCopied ? (
+                <Check className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+              ) : (
+                <Copy className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* 2. Unsupported / Restricted Notice */}
       {isRestricted && (
         <div
           id="unsupported-notice"
@@ -548,7 +640,7 @@ export function PopupApp() {
       )}
 
       {/* 3. Main Controls */}
-      <main id="main-controls" className="flex flex-col gap-3.5">
+      <main id="main-controls" className="flex flex-col gap-3">
         {/* Converter / Target Currency */}
         <section className="space-y-2" aria-labelledby="target-heading">
           <div className="flex items-center justify-between">
@@ -567,7 +659,7 @@ export function PopupApp() {
               id="from-display"
               className="shrink-0 text-xs text-muted-foreground"
             >
-              Auto-detect
+              {assumedCurrency ? `Site (${assumedCurrency})` : "Auto-detect"}
             </span>
 
             <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
@@ -589,7 +681,7 @@ export function PopupApp() {
             </div>
           </div>
 
-          {/* Pinned currencies: balanced 4-column grid, borderless chips */}
+          {/* Pinned currencies: balanced 4-column grid */}
           <div
             role="group"
             aria-label="Pinned currencies"
@@ -640,12 +732,12 @@ export function PopupApp() {
             : "Convert this page"}
         </Button>
 
-        {/* 5. Live Status (boxless: dot + text) */}
+        {/* 5. Live Status */}
         <div
           id="live-status"
           role="status"
           aria-live="polite"
-          className="flex items-center gap-2 text-sm tabular-nums"
+          className="flex items-center gap-2 text-xs tabular-nums"
         >
           <span
             className={`w-2 h-2 rounded-full shrink-0 ${
@@ -664,7 +756,7 @@ export function PopupApp() {
               statusType === "error"
                 ? "text-destructive"
                 : statusType === "converted"
-                ? "text-foreground"
+                ? "text-foreground font-medium"
                 : "text-muted-foreground"
             }`}
           >
@@ -672,18 +764,20 @@ export function PopupApp() {
           </span>
         </div>
 
-        {/* 6. This site (hidden on restricted pages): hairline-separated rows, no boxes */}
+        {/* 6. Unified "This site" control group */}
         {!isRestricted && (
-          <section className="space-y-3" aria-labelledby="site-heading">
-            <Separator />
-            <div className="flex items-center justify-between gap-2 pt-1">
+          <section
+            className="rounded-lg bg-secondary/35 border border-border/70 p-3 space-y-2.5"
+            aria-labelledby="site-heading"
+          >
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-baseline gap-2 min-w-0">
-                <h2 id="site-heading" className="text-sm font-medium text-muted-foreground shrink-0">
+                <h2 id="site-heading" className="text-xs font-medium text-muted-foreground shrink-0">
                   This site
                 </h2>
                 <span
                   id="current-domain-label"
-                  className="font-mono text-sm font-medium text-foreground truncate max-w-[190px]"
+                  className="font-mono text-xs font-medium text-foreground truncate max-w-[185px]"
                   title={hostname || "Current site"}
                 >
                   {hostname || "Current site"}
@@ -695,7 +789,7 @@ export function PopupApp() {
                   variant="ghost"
                   size="sm"
                   onClick={handleResetSiteMode}
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
                   title="Reset site rule to default"
                 >
                   Reset
@@ -704,7 +798,7 @@ export function PopupApp() {
             </div>
 
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm text-foreground">Automatic conversion</span>
+              <span className="text-xs text-foreground">Automatic conversion</span>
               <SiteModeControl
                 value={siteMode}
                 onChange={handleSiteModeChange}
@@ -714,17 +808,16 @@ export function PopupApp() {
               />
             </div>
 
-            {/* Default mode caption when inheriting default */}
             {!siteMode && (
-              <div className="text-xs text-muted-foreground text-right -mt-1.5">
+              <div className="text-xs text-muted-foreground text-right -mt-1">
                 {effectiveCaption}
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/60">
               <label
                 htmlFor="site-currency-override"
-                className="text-sm text-foreground truncate min-w-0"
+                className="text-xs text-foreground truncate min-w-0"
               >
                 Prices on this site are in
               </label>
@@ -738,7 +831,7 @@ export function PopupApp() {
                 triggerText={assumedCurrency || "Auto-detect"}
                 ariaLabel={`Prices on ${hostname || "this site"} are in`}
                 align="end"
-                className="h-9 px-2.5 text-xs font-mono w-[140px] shrink-0"
+                className="h-8 px-2.5 text-xs font-mono w-[136px] shrink-0"
                 popoverClassName="w-[280px]"
                 scrollHeight="h-44"
                 placeholder="Assumed currency..."

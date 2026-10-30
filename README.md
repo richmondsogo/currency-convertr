@@ -1,4 +1,4 @@
-# Currency Convertr
+# Canji — Prices, in your currency
 
 [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](package.json)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Chromium%20%7C%20Firefox-lightgrey.svg)](#cross-browser-compatibility)
 [![Tests](https://img.shields.io/badge/Tests-120%20Unit%20%7C%2015%20E2E%20Passing-brightgreen.svg)](#testing--verification)
 
-> **"Google Translate for prices"** (v2.0.0) — A privacy-first browser extension that converts prices on international web pages into your preferred currency in place, with a floating status pill and instant restoration of original prices.
+> **"Prices, in your currency"** (v2.0.0) — A privacy-first browser extension that converts prices on international web pages into your preferred currency in place, with a floating Dynamic Island status pill and instant restoration of original prices.
 
 ---
 
@@ -110,7 +110,7 @@ flowchart TD
 
 ## Permission Model & Least Privilege
 
-Currency Convertr requests the following permissions in `manifest.json`:
+Canji requests the following permissions in `manifest.json`:
 
 | Permission | Scope | Technical Justification |
 |---|---|---|

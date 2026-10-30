@@ -2,9 +2,9 @@
 
 > **Target Version**: 2.0.0  
 > **Package Files**:  
-> - Chrome: `dist/packages/currency-converter-chrome-v2.0.0.zip`  
-> - Firefox: `dist/packages/currency-converter-firefox-v2.0.0.zip`  
-> **Last Verified**: 2026-10-17  
+> - Chrome: `dist/packages/canji-chrome-v2.0.0.zip`  
+> - Firefox: `dist/packages/canji-firefox-v2.0.0.zip`  
+> **Last Verified**: 2026-10-30  
 
 ---
 
@@ -14,13 +14,13 @@
 
 #### Extension Name
 ```text
-Currency Convertr
+Canji — Currency Converter
 ```
 
 #### Summary / Short Description
-*(132 characters max — Current: 122 characters)*
+*(132 characters max — Current: 108 characters)*
 ```text
-Convert every price on any webpage in place into your preferred currency with live exchange rates. Google Translate for prices.
+Prices, in your currency. Convert every price on any webpage in place into your preferred currency with live rates.
 ```
 
 #### Detailed Description
@@ -119,7 +119,7 @@ Convert prices on webpages into the user's selected target currency using live f
 ```text
 Reviewer Guidance:
 1. Pure Manifest V3 Architecture: The background service worker (background.js) orchestrates rate caching and messaging.
-2. User-Initiated Execution: In-page price conversion runs on-demand via activeTab and scripting.executeScript. Optional host permissions (<all_urls>) are only requested upon explicit user toggle ("Always convert on this site").
+2. User-Initiated & Rule-Based Execution: In-page price conversion runs on-demand via activeTab and scripting.executeScript or on sites explicitly configured by the user ("Always convert on this site"). Host permissions (<all_urls>) are used strictly to inject the local price scanner and fetch public exchange rate JSON tables.
 3. Local Processing: No page text, URLs, or browsing data are transmitted anywhere. The only network calls are anonymous GET requests for public currency rate tables (base EUR).
 4. No Remote Code: All JavaScript modules are bundled locally using esbuild with zero eval, zero inline scripts, and zero remote code dependencies.
 ```
@@ -132,12 +132,12 @@ Reviewer Guidance:
 
 #### Add-on Name
 ```text
-Currency Convertr
+Canji — Currency Converter
 ```
 
 #### Add-on ID
 ```text
-currency-converter-fx@richmond.addons
+canji@richmond.addons
 ```
 
 #### Summary
@@ -176,7 +176,7 @@ Dear AMO Review Team,
 
 Currency Convertr v2.0.0 is a Manifest V3 add-on providing in-page currency conversion:
 1. Local DOM Processing: All text scanning and currency replacement occur entirely client-side in the active tab. No webpage content, URLs, or browsing data are ever sent off the device.
-2. Optional Host Permissions: The add-on specifies optional_host_permissions: ["<all_urls>"]. This permission is NOT active upon installation. It is only requested via browser.permissions.request() if the user explicitly turns on "Always convert on this site" or "Auto-convert on all sites" in the popup or options page.
+2. Host Permissions: The add-on declares host_permissions: ["<all_urls>"] strictly to inject the local price conversion content script when requested by the user (or on user-configured "Always convert" domains) and to fetch public exchange rate JSON tables. No passive background tracking or remote script injection occurs on unconfigured pages.
 3. Clean Manifest V3 Build: Bundled via esbuild with zero remote scripts and zero innerHTML usages (verified with web-ext lint: 0 errors, 0 notices, 0 warnings).
 4. Dual Rate Architecture: Exchange rates are fetched anonymously by the background script (base EUR) from the European Central Bank (Frankfurter) and Fawaz Ahmed currency API via jsDelivr CDN / Cloudflare Pages.
 ```
