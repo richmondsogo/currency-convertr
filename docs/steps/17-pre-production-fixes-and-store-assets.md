@@ -1,6 +1,10 @@
 # Step 17: Pre-Production Audit Fixes, Canji Rebrand & Store Asset Verification
 
 **Branch**: `step/17-pre-production-fixes-and-store-assets`  
+**Pull Request**: [#23](https://github.com/richmondsogo/currency-convertr/pull/23)  
+**First Commit**: `0b69be2`  
+**Last Commit**: `0b69be2`  
+**Merge Commit**: `5bb5d62`  
 **Target Version**: `2.0.0`  
 **Repository Remote**: `https://github.com/richmondsogo/currency-convertr.git`  
 **Date**: 2026-10-30  
